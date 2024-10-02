@@ -1,15 +1,7 @@
 import { serve } from "bun";
-import { Hono } from "hono";
-import { logger } from "hono/logger";
+import app from "./routes/root";
 
-const app = new Hono().basePath("/api/v1");
-
-app.use("*", logger());
-app.get("/", (c) => {
-  return c.text("Hello Hono!");
-});
-
-const port = 4000;
+const port = process.env.PORT || 4000;
 console.log(`Server is running on port ${port}`);
 
 serve({
