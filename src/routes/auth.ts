@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { userTable } from "@/db/schema";
+import { userTable } from "@/db/schema/user";
 import { lucia } from "@/lib/lucia-auth";
 import { AuthContext } from "@/types";
 import { zValidator } from "@hono/zod-validator";
