@@ -28,22 +28,18 @@ const authRoutes = new Hono<AuthContext>()
 
     const userId = generateId(15);
     try {
-      const user = await db
-        .insert(userTable)
-        .values({ email, id: userId, name, passwordHash: hash })
-        .returning();
+      await db.insert(userTable).values({ email, id: userId, name, passwordHash: hash });
 
       const session = await lucia.createSession(userId, {});
       c.header("Set-Cookie", lucia.createSessionCookie(session.id).serialize(), { append: true });
 
-      return c.json(user);
-      // return c.redirect("/")
+      // return c.json(user);
+      return c.redirect("/");
     } catch (err) {
-      console.log(err);
       if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
         return c.json({ error: "Email already used" }, 400);
       }
-
+      console.log(err);
       return c.json({ error: "Internal server error" }, 500);
     }
   })
@@ -66,8 +62,9 @@ const authRoutes = new Hono<AuthContext>()
       const session = await lucia.createSession(user?.id, {});
       c.header("Set-Cookie", lucia.createSessionCookie(session.id).serialize(), { append: true });
       c.header("Location", "/", { append: true });
-      return c.json(user);
-      // return c.redirect("/")
+
+      // return c.json(user);
+      return c.redirect("/");
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal server error" }, 500);
