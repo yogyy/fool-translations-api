@@ -1,12 +1,12 @@
 import { db } from "@/db";
 import { userTable } from "@/db/schema/user";
 import { lucia } from "@/lib/lucia-auth";
+import { generateRandId } from "@/lib/utils";
 import { AuthContext } from "@/types";
 import { zValidator } from "@hono/zod-validator";
 import { SQLiteError } from "bun:sqlite";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { generateId } from "lucia";
 import { z } from "zod";
 
 const userSigninDTO = z.object({
@@ -26,7 +26,7 @@ const authRoutes = new Hono<AuthContext>()
     const { email, name, password } = c.req.valid("json");
     const hash = await Bun.password.hash(password);
 
-    const userId = generateId(15);
+    const userId = generateRandId("usr");
     try {
       await db.insert(userTable).values({ email, id: userId, name, passwordHash: hash });
 
