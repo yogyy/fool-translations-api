@@ -1,19 +1,10 @@
 import app from "@/routes/root";
-import { describe, expect, it, test } from "bun:test";
-import { Hono } from "hono";
-import { testClient } from "hono/testing";
-import { loginBody, registerBody } from "./test-helper";
+import { describe, expect, test } from "bun:test";
+import { getCookieValue, loginBody, registerBody } from "./test-helper";
 import { db } from "@/db";
 import { userTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
-
-describe("Example", () => {
-  test("GET / without header Cookie", async () => {
-    const res = await app.request("/api/v1");
-    expect(res.status).toBe(401);
-    expect(res.body).toBe(null);
-  });
-});
+import { lucia } from "@/lib/lucia-auth";
 
 describe("User Register", () => {
   test("sign-up with incorrect body", async () => {
@@ -39,9 +30,13 @@ describe("User Register", () => {
       headers: new Headers({ "Content-Type": "application/json" }),
     });
 
-    expect(res.status).toBe(302);
+    expect(res.status).toBe(302); // redirected
     expect(res.headers.get("location")).toStrictEqual("/");
     expect(res.headers.get("set-cookie")).toBeDefined();
+
+    // delete session from sign-up
+    const sessionId = getCookieValue(res.headers.get("set-cookie")!, "auth_session");
+    await lucia.invalidateSession(sessionId!);
   });
 
   test("signup with existing email", async () => {
@@ -57,7 +52,9 @@ describe("User Register", () => {
   });
 });
 
-describe("User Signin", () => {
+describe("User Signin & Signout", () => {
+  let cookieSession: string | null;
+
   test("sign-in with incorrect body", async () => {
     const res = await app.request("/api/v1/auth/signin", {
       method: "POST",
@@ -82,12 +79,37 @@ describe("User Signin", () => {
       headers: new Headers({ "Content-Type": "application/json" }),
     });
 
-    expect(res.status).toBe(302);
-    expect(res.headers.get("location")).toStrictEqual("/");
-    expect(res.headers.get("set-cookie")).toBeDefined();
-  });
-});
+    cookieSession = res.headers.get("set-cookie");
 
-test("delete registed user test", async () => {
-  await db.delete(userTable).where(eq(userTable.email, registerBody.email));
+    expect(res.status).toBe(302); // redirected
+    expect(res.headers.get("location")).toStrictEqual("/");
+    expect(res.headers.get("set-cookie")).toStrictEqual(cookieSession);
+  });
+
+  test("sign-out with no cookie", async () => {
+    const res = await app.request("/api/v1/auth/signout", {
+      method: "POST",
+      headers: new Headers({}),
+    });
+
+    expect(res.status).toBe(401);
+    expect(res.body).toBe(null);
+  });
+
+  test("sign-out with cookie", async () => {
+    const res = await app.request("/api/v1/auth/signout", {
+      method: "POST",
+      headers: new Headers({ Cookie: cookieSession as string }),
+    });
+
+    expect(res.status).toBe(302); // redirected
+    expect(res.headers.get("location")).toStrictEqual("/");
+    expect(res.headers.get("set-cookie")).toStrictEqual(
+      "auth_session=; HttpOnly; Max-Age=0; Path=/; SameSite=Lax"
+    );
+  });
+
+  test("delete registered user test", async () => {
+    await db.delete(userTable).where(eq(userTable.email, registerBody.email));
+  });
 });
