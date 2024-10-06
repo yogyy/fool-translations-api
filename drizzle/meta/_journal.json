@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1728065604257,
+      "tag": "0000_lethal_mysterio",
+      "breakpoints": true
+    }
+  ]
+}
