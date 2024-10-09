@@ -1,25 +1,13 @@
-import { db } from "@/db";
-import { userTable } from "@/db/schema/user";
-import { lucia } from "@/lib/lucia-auth";
-import { generateRandId } from "@/lib/utils";
-import { AuthContext } from "@/types";
-import { zValidator } from "@hono/zod-validator";
-import { SQLiteError } from "bun:sqlite";
-import { eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { z } from "zod";
-
-const userSigninDTO = z.object({
-  email: z.string().email(),
-  password: z.string().min(8, "Password needs to be at least 8 characters"),
-});
-
-const userSignupDTO = userSigninDTO.extend({
-  name: z
-    .string()
-    .min(4, "Name needs to be at least 4 characters")
-    .regex(/^[a-zA-Z0-9]+$/, "name can only contain letters and numbers"),
-});
+import { eq } from "drizzle-orm";
+import { SQLiteError } from "bun:sqlite";
+import { db } from "@/db";
+import { AuthContext } from "@/types";
+import { lucia } from "@/lib/lucia-auth";
+import { userTable } from "@/db/schema/user";
+import { generateRandId } from "@/lib/utils";
+import { zValidator } from "@hono/zod-validator";
+import { userSigninDTO, userSignupDTO } from "@/lib/dtos";
 
 const authRoutes = new Hono<AuthContext>()
   .post("/signup", zValidator("json", userSignupDTO), async (c) => {
@@ -33,14 +21,13 @@ const authRoutes = new Hono<AuthContext>()
       const session = await lucia.createSession(userId, {});
       c.header("Set-Cookie", lucia.createSessionCookie(session.id).serialize(), { append: true });
 
-      // return c.json(user);
       return c.redirect("/");
     } catch (err) {
       if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
-        return c.json({ error: "Email already used" }, 400);
+        return c.json({ success: false, error: "Email Already Used" }, 400);
       }
       console.log(err);
-      return c.json({ error: "Internal server error" }, 500);
+      return c.json({ error: "Internal Server Errror" }, 500);
     }
   })
   .post("/signin", zValidator("json", userSigninDTO), async (c) => {
@@ -51,23 +38,22 @@ const authRoutes = new Hono<AuthContext>()
         where: eq(userTable.email, email),
       });
       if (!user) {
-        return c.json({ error: "Invalid username or password." }, 401);
+        return c.json({ success: false, error: "Invalid Username or Password." }, 401);
       }
 
       const passwordMatch = Bun.password.verify(password, user.passwordHash);
       if (!passwordMatch) {
-        return c.json({ error: "Invalid username or password." }, 401);
+        return c.json({ success: false, error: "Invalid Username or Password." }, 401);
       }
 
       const session = await lucia.createSession(user?.id, {});
       c.header("Set-Cookie", lucia.createSessionCookie(session.id).serialize(), { append: true });
       c.header("Location", "/", { append: true });
 
-      // return c.json(user);
       return c.redirect("/");
     } catch (err) {
       console.log(err);
-      return c.json({ error: "Internal server error" }, 500);
+      return c.json({ error: "Internal Server Errror" }, 500);
     }
   })
   .post("/signout", async (c) => {
