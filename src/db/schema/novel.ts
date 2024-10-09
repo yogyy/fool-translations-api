@@ -2,34 +2,47 @@ import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, real, unique } from "drizzle-orm/sqlite-core";
 import { userTable } from "./user";
 
-export const novelTable = sqliteTable("novel", {
-  id: text("id").primaryKey(),
-  title: text("title").notNull(),
-  author: text("author").notNull(),
-  genres: text("genres", { mode: "json" })
-    .$type<string[]>()
-    .default(sql`(json_array())`),
-  synopsis: text("synopsis").notNull(),
-  cover: text("cover"),
-  banner: text("banner"),
-  totalViews: integer("total_views").default(0),
-  last_updated: text("published_at")
-    .default(sql`(current_timestamp)`)
-    .notNull(),
-});
+export const novelTable = sqliteTable(
+  "novel",
+  {
+    id: text("id").primaryKey(),
+    title: text("title").notNull(),
+    author: text("author").notNull(),
+    genres: text("genres", { mode: "json" })
+      .$type<string[]>()
+      .default(sql`(json_array())`),
+    synopsis: text("synopsis").notNull(),
+    cover: text("cover"),
+    banner: text("banner"),
+    totalViews: integer("total_views").default(0),
+    status: text("status", { enum: ["ongoing", "completed"] }).default("ongoing"),
+    last_updated: text("published_at")
+      .default(sql`(current_timestamp)`)
+      .notNull(),
+  },
+  (table) => ({
+    unq: unique().on(table.author, table.title),
+  })
+);
 
-export const chapterTable = sqliteTable("novel_chapter", {
-  id: text("id").primaryKey(),
-  chapterNum: integer("chapter_number").notNull(),
-  title: text("title").notNull(),
-  createdAt: text("created_at")
-    .default(sql`(current_timestamp)`)
-    .notNull(),
-  content: text("content").notNull(),
-  novelId: text("novel_id")
-    .references(() => novelTable.id, { onDelete: "cascade" })
-    .notNull(),
-});
+export const chapterTable = sqliteTable(
+  "novel_chapter",
+  {
+    id: text("id").primaryKey(),
+    chapterNum: integer("chapter_number").notNull(),
+    title: text("title").notNull(),
+    createdAt: text("created_at")
+      .default(sql`(current_timestamp)`)
+      .notNull(),
+    content: text("content").notNull(),
+    novelId: text("novel_id")
+      .references(() => novelTable.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => ({
+    unq: unique().on(table.novelId, table.chapterNum),
+  })
+);
 
 export const RatingTable = sqliteTable(
   "novel_rating",
