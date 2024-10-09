@@ -47,7 +47,8 @@ describe("User Register", () => {
     });
     expect(res.status).toBe(400);
     expect(await res.json()).toStrictEqual({
-      error: "Email already used",
+      success: false,
+      error: "Email Already Used",
     });
   });
 });
