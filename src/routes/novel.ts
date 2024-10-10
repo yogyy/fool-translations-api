@@ -24,7 +24,6 @@ const novelRoutes = new Hono<AuthContext>()
   .get("/:id", zValidator("param", byIdParam("nvl_")), async (c) => {
     const { id } = c.req.valid("param");
 
-    const novel = db.select().from(novelTable).where(eq(novelTable.id, id)).prepare();
     const updateView = db
       .update(novelTable)
       .set({ totalViews: sql`${novelTable.totalViews} + 1` })
@@ -32,12 +31,19 @@ const novelRoutes = new Hono<AuthContext>()
       .prepare();
 
     try {
-      const novelbyId = novel.all();
+      const novelbyId = await db.query.novelTable.findFirst({
+        where: eq(novelTable.id, id),
+        with: {
+          chapters: {
+            columns: { id: true, title: true, chapterNum: true },
+          },
+        },
+      });
       if (!novelbyId) return c.notFound();
 
-      updateView.all();
+      updateView.run();
 
-      return c.json(novelbyId);
+      return c.json({ success: true, data: novelbyId });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
