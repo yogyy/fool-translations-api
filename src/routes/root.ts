@@ -5,6 +5,7 @@ import { getCookie } from "hono/cookie";
 import { AuthContext } from "@/types";
 import { lucia } from "@/lib/lucia-auth";
 import authRoutes from "./auth";
+import novelRoutes from "./novel";
 
 const app = new Hono<AuthContext>().basePath("/api/v1");
 
@@ -35,5 +36,6 @@ app.use("*", async (c, next) => {
 });
 
 app.route("/auth", authRoutes);
+app.route("/novels", novelRoutes);
 
 export default app;
