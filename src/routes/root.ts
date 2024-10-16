@@ -1,16 +1,24 @@
 import { Hono } from "hono";
-import { csrf } from "hono/csrf";
 import { logger } from "hono/logger";
 import { getCookie } from "hono/cookie";
 import { AuthContext } from "@/types";
 import { lucia } from "@/lib/lucia-auth";
 import authRoutes from "./auth";
 import novelRoutes from "./novel";
+import { cors } from "hono/cors";
+import chapterRoutes from "./chapter";
 
 const app = new Hono<AuthContext>().basePath("/api/v1");
 
-app.use("*", logger());
-app.use(csrf());
+app.use(
+  "*",
+  logger(),
+  cors({
+    origin: ["http://localhost:5173"],
+    allowMethods: ["POST", "GET", "OPTIONS"],
+    credentials: true,
+  })
+);
 app.use("*", async (c, next) => {
   const sessionId = getCookie(c, lucia.sessionCookieName) ?? null;
   if (!sessionId) {
@@ -37,5 +45,6 @@ app.use("*", async (c, next) => {
 
 app.route("/auth", authRoutes);
 app.route("/novels", novelRoutes);
+app.route("/chapters", chapterRoutes);
 
 export default app;
