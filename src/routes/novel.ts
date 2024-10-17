@@ -41,9 +41,19 @@ const novelRoutes = new Hono<AuthContext>()
       });
       if (!novelbyId) return c.notFound();
 
-      updateView.run();
+      const [rating] = await db
+        .select({ value: avg(RatingTable.rating) })
+        .from(RatingTable)
+        .where(eq(RatingTable.novelId, id));
 
-      return c.json({ success: true, data: novelbyId });
+      updateView.run();
+      return c.json({
+        success: true,
+        data: {
+          ...novelbyId,
+          average_rating: Number(rating.value),
+        },
+      });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
