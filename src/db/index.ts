@@ -1,8 +1,9 @@
 import { drizzle } from "drizzle-orm/bun-sqlite";
 import { Database } from "bun:sqlite";
-import * as schema from "./schema";
+import * as novelSchema from "./schema/novel";
+import * as userSchema from "./schema/user";
 
 const sqlite = new Database("./src/db/novel.sqlite");
-const db = drizzle(sqlite, { schema });
+const db = drizzle(sqlite, { schema: { ...novelSchema, ...userSchema } });
 
 export { db };
