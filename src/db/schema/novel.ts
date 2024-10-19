@@ -16,7 +16,10 @@ export const novelTable = sqliteTable(
     banner: text("banner"),
     totalViews: integer("total_views").default(0),
     status: text("status", { enum: ["ongoing", "completed"] }).default("ongoing"),
-    last_updated: text("published_at")
+    published_at: text("published_at")
+      .default(sql`(current_timestamp)`)
+      .notNull(),
+    last_updated: text("last_updated")
       .default(sql`(current_timestamp)`)
       .notNull(),
   },
@@ -64,6 +67,17 @@ export const RatingTable = sqliteTable(
   })
 );
 
+export const SpotlightTable = sqliteTable("novel_spotlight", {
+  id: integer("id").primaryKey(),
+  image: text("image").notNull(),
+  createdAt: text("created_at")
+    .default(sql`(current_timestamp)`)
+    .notNull(),
+  novelId: text("novel_id")
+    .references(() => novelTable.id, { onDelete: "cascade" })
+    .notNull(),
+});
+
 export const novelRelations = relations(novelTable, ({ many }) => ({
   chapters: many(chapterTable),
   rating: many(RatingTable),
@@ -79,6 +93,13 @@ export const chapterRelations = relations(chapterTable, ({ one }) => ({
 export const ratingRelations = relations(RatingTable, ({ one }) => ({
   novel: one(novelTable, {
     fields: [RatingTable.novelId],
+    references: [novelTable.id],
+  }),
+}));
+
+export const spotlightRelation = relations(SpotlightTable, ({ one }) => ({
+  novel: one(novelTable, {
+    fields: [SpotlightTable.novelId],
     references: [novelTable.id],
   }),
 }));

@@ -22,6 +22,13 @@
       "when": 1728489363124,
       "tag": "0002_daffy_thunderbolts",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1729339304938,
+      "tag": "0003_cloudy_swarm",
+      "breakpoints": true
     }
   ]
 }
