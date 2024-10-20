@@ -53,8 +53,11 @@ export const AllNovelParams = z.object({
   pageSize: z.coerce.number().min(1).default(10),
 });
 
-export const RatingDTO = z.object({
+export const GetRating = z.object({
   novelId: CustomID("nvl_", "Novel ID"),
+});
+
+export const RatingDTO = GetRating.extend({
   rating: z.number().min(1).max(10),
 });
 
