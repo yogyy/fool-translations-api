@@ -9,13 +9,67 @@ import { desc, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 
 const novelRoutes = new Hono<AuthContext>()
-  .get("/updated", async (c) => {
+  .get("/", zValidator("query", AllNovelParams), async (c) => {
+    const { sort, status, genre, page, pageSize } = c.req.valid("query");
+
+    console.log(page, pageSize);
+
+    const orderColumn: SQLWrapper =
+      sort === "recent"
+        ? novelTable.last_updated
+        : sort === "views"
+        ? novelTable.totalViews
+        : sql`${count(RatingTable.id)} * ${avg(RatingTable.rating)}`;
+
     try {
-      const novels = await db.query.novelTable.findMany({
-        orderBy: desc(novelTable.last_updated),
-      });
+      const novels = await db
+        .select({
+          title: novelTable.title,
+          genres: novelTable.genres,
+          cover: novelTable.cover,
+          totalRatings: count(RatingTable.id),
+          averageRating: avg(RatingTable.rating),
+          popularityScore: sql`${count(RatingTable.id)} * ${avg(RatingTable.rating)}`,
+        })
+        .from(novelTable)
+        .leftJoin(RatingTable, eq(novelTable.id, RatingTable.novelId))
+        .where(status !== "all" ? eq(novelTable.status, status) : undefined)
+        .groupBy(novelTable.id)
+        .orderBy(desc(orderColumn))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize);
 
       return c.json(novels);
+    } catch (err) {
+      console.log(err);
+      return c.json({ error: "Internal Server Errror" }, 500);
+    }
+  })
+  .get("/featured/hot", async (c) => {
+    try {
+      const hotNovels = await db.query.SpotlightTable.findMany();
+
+      return c.json({ success: true, data: hotNovels });
+    } catch (err) {
+      console.log(err);
+      return c.json({ error: "Internal Server Errror" }, 500);
+    }
+  })
+  .get("/featured/top", async (c) => {
+    try {
+      const topnovels = await db
+        .select({
+          id: novelTable.id,
+          title: novelTable.title,
+          cover: novelTable.cover,
+        })
+        .from(novelTable)
+        .leftJoin(RatingTable, eq(novelTable.id, RatingTable.novelId))
+        .groupBy(novelTable.id)
+        .orderBy(desc(sql`${count(RatingTable.id)} * ${avg(RatingTable.rating)}`))
+        .limit(20);
+
+      return c.json({ success: true, data: topnovels });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
