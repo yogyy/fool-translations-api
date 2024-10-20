@@ -45,6 +45,19 @@ export const byIdParam = (param: string) => {
   });
 };
 
+export const AllNovelParams = z.object({
+  status: z.enum(["ongoing", "completed", "all"]).default("all"),
+  sort: z.enum(["popular", "recent", "views"]).default("popular"),
+  genre: z.string().optional(),
+  page: z.coerce.number().min(1).default(1),
+  pageSize: z.coerce.number().min(1).default(10),
+});
+
+export const RatingDTO = z.object({
+  novelId: CustomID("nvl_", "Novel ID"),
+  rating: z.number().min(1).max(10),
+});
+
 export const AllChapterParam = z.object({
-  novel_id: CustomID("nvl_", "novel_id"),
+  novelId: CustomID("nvl_", "novelid"),
 });
