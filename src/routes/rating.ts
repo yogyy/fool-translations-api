@@ -1,21 +1,16 @@
-import { db } from "@/db";
-import { RatingTable } from "@/db/schema/novel";
-import { GetRating, RatingDTO } from "@/lib/dtos";
-import { AuthContext } from "@/types";
-import { zValidator } from "@hono/zod-validator";
-import { SQLiteError } from "bun:sqlite";
-import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { User } from "lucia";
+import { and, eq } from "drizzle-orm";
+import { zValidator } from "@hono/zod-validator";
+import { SQLiteError } from "bun:sqlite";
+import { AuthContext } from "@/types";
+import { isUser } from "@/middleware";
+import { RatingTable } from "@/db/schema/novel";
+import { GetRating, RatingDTO } from "@/lib/dtos";
+import { db } from "@/db";
 
 const ratingRoutes = new Hono<AuthContext>()
-  .use(async (c, next) => {
-    const user = c.get("user");
-
-    if (!user) return c.newResponse("", 401);
-
-    await next();
-  })
+  .use(isUser)
   .get("/:novelId", zValidator("param", GetRating), async (c) => {
     const { novelId } = c.req.valid("param");
     const user = c.get("user") as User;

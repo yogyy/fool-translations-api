@@ -4,9 +4,17 @@ import { AuthContext } from "@/types";
 import { lucia } from "@/lib/lucia-auth";
 
 export const isAdmin = createMiddleware<AuthContext>(async (c, next) => {
-  const admin = c.get("user");
+  const admin = c.get("user"); // TODO: add user type admin
   // console.log(admin);
   if (!admin) return c.notFound();
+
+  await next();
+});
+
+export const isUser = createMiddleware<AuthContext>(async (c, next) => {
+  const user = c.get("user");
+
+  if (!user) return c.newResponse("", 401);
 
   await next();
 });
