@@ -71,6 +71,9 @@ const adminRoutes = new Hono<AuthContext>()
     const body = c.req.valid("json");
 
     try {
+      const novel = await db.query.novelTable.findFirst({ where: eq(novelTable.id, body.novelId) });
+      if (!novel) return c.json({ success: false, error: "Novel Not Found" }, 404);
+
       const [newChapter] = await db
         .insert(chapterTable)
         .values({ id: generateRandId("ch"), ...body })
