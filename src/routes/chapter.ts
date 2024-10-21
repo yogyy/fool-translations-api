@@ -10,11 +10,15 @@ const chapterRoutes = new Hono<AuthContext>()
   .get("/", zValidator("query", AllChapterParam), async (c) => {
     const { novelId } = c.req.valid("query");
     try {
-      const novels = await db.select().from(chapterTable).where(eq(chapterTable.novelId, novelId));
-      if (novels.length === 0)
+      const chapters = await db.query.chapterTable.findMany({
+        where: eq(chapterTable.novelId, novelId),
+        columns: { content: false },
+      });
+
+      if (chapters.length === 0)
         return c.json({ success: false, error: "Novel's Chapter Not Found" }, 404);
 
-      return c.json({ success: true, data: novels });
+      return c.json({ success: true, data: chapters });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
