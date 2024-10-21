@@ -20,6 +20,7 @@ const novelRoutes = new Hono<AuthContext>()
     try {
       const novels = await db
         .select({
+          id: novelTable.id,
           title: novelTable.title,
           genres: novelTable.genres,
           cover: novelTable.cover,
@@ -89,7 +90,7 @@ const novelRoutes = new Hono<AuthContext>()
           },
         },
       });
-      if (!novelbyId) return c.notFound();
+      if (!novelbyId) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
       const [rating] = await db
         .select({ value: avg(RatingTable.rating) })
