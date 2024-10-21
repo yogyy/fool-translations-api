@@ -2,7 +2,7 @@ import { AuthContext } from "@/types";
 import { Hono } from "hono";
 import { db } from "@/db";
 import { SQLiteError } from "bun:sqlite";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import { novelPayloadDTO, byIdParam, editNovelPayloadDTO, chapterPayloadDTO } from "@/lib/dtos";
 import { chapterTable, novelTable } from "@/db/schema/novel";
@@ -39,10 +39,10 @@ const adminRoutes = new Hono<AuthContext>()
       try {
         const [editedNovel] = await db
           .update(novelTable)
-          .set({ ...body })
+          .set({ ...body, last_updated: sql`(current_timestamp)` })
           .where(eq(novelTable.id, id))
           .returning();
-        if (!editedNovel) return c.notFound();
+        if (!editedNovel) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
         return c.json({ success: true, data: editedNovel });
       } catch (err) {
@@ -59,7 +59,7 @@ const adminRoutes = new Hono<AuthContext>()
         .delete(novelTable)
         .where(eq(novelTable.id, id))
         .returning({ id: novelTable.id });
-      if (!deleted) return c.notFound();
+      if (!deleted) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
       return c.json({ success: true, data: `Novel ${deleted.id} Deleted.` });
     } catch (err) {
@@ -73,12 +73,13 @@ const adminRoutes = new Hono<AuthContext>()
     try {
       const [newChapter] = await db
         .insert(chapterTable)
-        .values({
-          id: generateRandId("ch"),
-          ...body,
-        })
+        .values({ id: generateRandId("ch"), ...body })
         .returning();
-      if (!newChapter) return c.notFound();
+
+      await db
+        .update(novelTable)
+        .set({ last_updated: sql`(current_timestamp)` })
+        .where(eq(novelTable.id, newChapter.novelId));
 
       return c.json({ success: true, data: newChapter });
     } catch (err) {
@@ -105,7 +106,7 @@ const adminRoutes = new Hono<AuthContext>()
         .set({ ...body })
         .where(eq(chapterTable.id, id))
         .returning();
-      if (!updated) return c.notFound();
+      if (!updated) return c.json({ success: false, error: "Chapter Not Found" }, 404);
 
       return c.json(updated);
     }
@@ -118,7 +119,7 @@ const adminRoutes = new Hono<AuthContext>()
         .delete(chapterTable)
         .where(eq(chapterTable.id, id))
         .returning({ id: chapterTable.id });
-      if (!deleted) return c.notFound();
+      if (!deleted) return c.json({ success: false, error: "Chapter Not Found" }, 404);
 
       return c.json({ success: true, data: `Chapter ${deleted.id} Deleted.` });
     } catch (err) {
