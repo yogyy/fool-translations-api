@@ -2,7 +2,8 @@
   "scripts": {
     "dev": "bun --watch src/index.ts",
     "generate": "bunx drizzle-kit generate",
-    "migrate": "bun run src/db/migrate.ts",
+    "migrate": "bun src/db/migrate.ts",
+    "seed": "bun src/db/seed.ts",
     "studio": "drizzle-kit studio"
   },
   "dependencies": {
