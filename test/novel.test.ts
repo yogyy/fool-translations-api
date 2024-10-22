@@ -117,9 +117,7 @@ describe("novel by id", () => {
     const novelId = novelTest.data.id;
     const res = await app.request(`/api/v1/admin/novel/${novelId}`, {
       method: "DELETE",
-      body: JSON.stringify(updateNovel),
       headers: new Headers({
-        "Content-Type": "application/json",
         Cookie: cookieTest,
       }),
     });

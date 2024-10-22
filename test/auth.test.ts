@@ -2,7 +2,7 @@ import app from "@/routes/root";
 import { describe, expect, test } from "bun:test";
 import { getCookieValue, loginBody, registerBody } from "./test-helper";
 import { db } from "@/db";
-import { userTable } from "@/db/schema";
+import { userTable } from "@/db/schema/user";
 import { eq } from "drizzle-orm";
 import { lucia } from "@/lib/lucia-auth";
 
