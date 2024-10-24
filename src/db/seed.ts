@@ -1,6 +1,8 @@
 import { generateRandId } from "@/lib/utils";
 import { db } from ".";
 import * as novelShema from "./schema/novel";
+import { userTable } from "./schema/user";
+import { createSession, generateSessionToken, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 const [seedNovel] = await db
   .insert(novelShema.novelTable)
@@ -43,5 +45,23 @@ await db.insert(novelShema.chapterTable).values([
     title: "chapter 4 title",
   },
 ]);
+
+const hash = await Bun.password.hash("password");
+
+const [userTest] = await db
+  .insert(userTable)
+  .values({
+    email: "test@mail.id",
+    id: "usr_testvcmxmonvpdp6",
+    name: "tester",
+    passwordHash: hash,
+  })
+  .returning();
+const token = generateSessionToken();
+const session = await createSession(token, userTest.id);
+console.log("use this for testing");
+console.log(
+  `${SESSION_COOKIE_NAME}=${token}; HttpOnly; SameSite=Lax; Expires=${session.expiresAt.toUTCString()}; Path=/`
+);
 
 console.log(`Seeding complete.`);

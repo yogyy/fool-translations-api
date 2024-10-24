@@ -47,7 +47,8 @@ export const ExpectedNovel = expect.objectContaining({
   last_updated: expect.any(String),
 });
 
+// run seeding to get new cookie for testing
 export const cookieTest =
-  "auth_session=4pax6hqfujzhv4t3hsvqmsbrmyfmdw3yh3fxn4ph; HttpOnly; Max-Age=1209600; Path=/; SameSite=Lax";
+  "session=w3g27zdslc3fqjx4bmgi5unhxvz3hvkr; HttpOnly; SameSite=Lax; Expires=Sat, 23 Nov 2024 16:25:49 GMT; Path=/";
 
 export const registerBody = { ...loginBody, name: "tester" };

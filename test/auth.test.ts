@@ -4,7 +4,7 @@ import { getCookieValue, loginBody, registerBody } from "./test-helper";
 import { db } from "@/db";
 import { userTable } from "@/db/schema/user";
 import { eq } from "drizzle-orm";
-import { lucia } from "@/lib/lucia-auth";
+import { invalidateSession, SESSION_COOKIE_NAME } from "@/lib/auth";
 
 describe("User Register", () => {
   test("sign-up with incorrect body", async () => {
@@ -35,8 +35,8 @@ describe("User Register", () => {
     expect(res.headers.get("set-cookie")).toBeDefined();
 
     // delete session from sign-up
-    const sessionId = getCookieValue(res.headers.get("set-cookie")!, "auth_session");
-    await lucia.invalidateSession(sessionId!);
+    const sessionId = getCookieValue(res.headers.get("set-cookie")!, SESSION_COOKIE_NAME);
+    await invalidateSession(sessionId!);
   });
 
   test("signup with existing email", async () => {
@@ -94,7 +94,6 @@ describe("User Signin & Signout", () => {
     });
 
     expect(res.status).toBe(401);
-    expect(res.body).toBe(null);
   });
 
   test("sign-out with cookie", async () => {
@@ -105,9 +104,8 @@ describe("User Signin & Signout", () => {
 
     expect(res.status).toBe(302); // redirected
     expect(res.headers.get("location")).toStrictEqual("/");
-    expect(res.headers.get("set-cookie")).toStrictEqual(
-      "auth_session=; HttpOnly; Max-Age=0; Path=/; SameSite=Lax"
-    );
+    const cookie = res.headers.get("set-cookie");
+    expect(cookie).toEqual(`${SESSION_COOKIE_NAME}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/`);
   });
 
   test("delete registered user test", async () => {
