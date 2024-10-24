@@ -1,13 +1,14 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
-import { SQLiteError } from "bun:sqlite";
 import { db } from "@/db";
+import { eq } from "drizzle-orm";
 import { AuthContext } from "@/types";
-import { lucia } from "@/lib/lucia-auth";
+import { SQLiteError } from "bun:sqlite";
 import { userTable } from "@/db/schema/user";
 import { generateRandId } from "@/lib/utils";
 import { zValidator } from "@hono/zod-validator";
 import { userSigninDTO, userSignupDTO } from "@/lib/dtos";
+import { deleteSessionTokenCookie, setSessionCookie } from "@/lib/session";
+import { createSession, generateSessionToken, invalidateSession } from "@/lib/auth";
 
 const authRoutes = new Hono<AuthContext>()
   .post("/signup", zValidator("json", userSignupDTO), async (c) => {
@@ -18,8 +19,9 @@ const authRoutes = new Hono<AuthContext>()
     try {
       await db.insert(userTable).values({ email, id: userId, name, passwordHash: hash });
 
-      const session = await lucia.createSession(userId, {});
-      c.header("Set-Cookie", lucia.createSessionCookie(session.id).serialize(), { append: true });
+      const token = generateSessionToken();
+      const session = await createSession(token, userId);
+      setSessionCookie(c, token, session.expiresAt);
 
       return c.redirect("/");
     } catch (err) {
@@ -46,8 +48,9 @@ const authRoutes = new Hono<AuthContext>()
         return c.json({ success: false, error: "Invalid Username or Password." }, 401);
       }
 
-      const session = await lucia.createSession(user?.id, {});
-      c.header("Set-Cookie", lucia.createSessionCookie(session.id).serialize(), { append: true });
+      const token = generateSessionToken();
+      const session = await createSession(token, user?.id);
+      setSessionCookie(c, token, session.expiresAt);
       c.header("Location", "/", { append: true });
 
       return c.redirect("/");
@@ -58,12 +61,11 @@ const authRoutes = new Hono<AuthContext>()
   })
   .post("/signout", async (c) => {
     const session = c.get("session");
-    if (!session) {
-      return c.body(null, 401);
-    }
+    if (!session) return c.newResponse("", 401);
 
-    await lucia.invalidateSession(session.id);
-    c.header("Set-Cookie", lucia.createBlankSessionCookie().serialize());
+    await invalidateSession(session.id);
+    deleteSessionTokenCookie(c);
+
     return c.redirect("/");
   });
 
