@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { User } from "lucia";
 import { and, eq } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import { SQLiteError } from "bun:sqlite";
@@ -8,6 +7,7 @@ import { isUser } from "@/middleware";
 import { RatingTable } from "@/db/schema/novel";
 import { GetRating, RatingDTO } from "@/lib/dtos";
 import { db } from "@/db";
+import { User } from "@/db/schema/user";
 
 const ratingRoutes = new Hono<AuthContext>()
   .use(isUser)
