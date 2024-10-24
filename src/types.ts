@@ -1,5 +1,5 @@
 import { Env } from "hono";
-import type { Session, User } from "lucia";
+import { Session, User } from "./db/schema/user";
 
 export interface AuthContext extends Env {
   Variables: {

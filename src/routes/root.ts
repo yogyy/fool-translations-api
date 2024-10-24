@@ -1,8 +1,6 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
-import { getCookie } from "hono/cookie";
 import { AuthContext } from "@/types";
-import { lucia } from "@/lib/lucia-auth";
 import authRoutes from "./auth";
 import novelRoutes from "./novel";
 import { cors } from "hono/cors";
