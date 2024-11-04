@@ -5,13 +5,13 @@ import { zValidator } from "@hono/zod-validator";
 import { db } from "@/db";
 import { User } from "@/db/schema/user";
 import { favoriteTable } from "@/db/schema/novel";
-import { GetRating as RateNovel } from "@/lib/dtos";
+import { GetRating as FavNovel } from "@/lib/dtos";
 import { and, count, eq } from "drizzle-orm";
 import { SQLiteError } from "bun:sqlite";
 
 const favoriteRoutes = new Hono<AuthContext>()
   .use(isUser)
-  .get("/:novelId", zValidator("param", RateNovel), async (c) => {
+  .get("/:novelId", zValidator("param", FavNovel), async (c) => {
     const { novelId } = c.req.valid("param");
     const user = c.get("user") as User;
 
@@ -40,7 +40,7 @@ const favoriteRoutes = new Hono<AuthContext>()
       return c.json({ error: "Internal Server Errror" }, 500);
     }
   })
-  .post("/", zValidator("json", RateNovel), async (c) => {
+  .post("/", zValidator("json", FavNovel), async (c) => {
     const { novelId } = c.req.valid("json");
     const user = c.get("user") as User;
 
