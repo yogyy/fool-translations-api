@@ -23,9 +23,7 @@ export const novelTable = sqliteTable(
       .default(sql`(current_timestamp)`)
       .notNull(),
   },
-  (table) => ({
-    unq: unique().on(table.author, table.title),
-  })
+  (table) => ({ unq: unique().on(table.author, table.title) })
 );
 
 export const chapterTable = sqliteTable(
@@ -42,9 +40,7 @@ export const chapterTable = sqliteTable(
       .references(() => novelTable.id, { onDelete: "cascade" })
       .notNull(),
   },
-  (table) => ({
-    unq: unique().on(table.novelId, table.chapterNum),
-  })
+  (table) => ({ unq: unique().on(table.novelId, table.chapterNum) })
 );
 
 export const RatingTable = sqliteTable(
@@ -62,9 +58,7 @@ export const RatingTable = sqliteTable(
       .default(sql`(current_timestamp)`)
       .notNull(),
   },
-  (table) => ({
-    unq: unique().on(table.novelId, table.userId),
-  })
+  (table) => ({ unq: unique().on(table.novelId, table.userId) })
 );
 
 export const SpotlightTable = sqliteTable("novel_spotlight", {
@@ -77,6 +71,23 @@ export const SpotlightTable = sqliteTable("novel_spotlight", {
     .references(() => novelTable.id, { onDelete: "cascade" })
     .notNull(),
 });
+
+export const favoriteTable = sqliteTable(
+  "novel_favorite",
+  {
+    id: integer("id").primaryKey(),
+    createdAt: text("created_at")
+      .default(sql`(current_timestamp)`)
+      .notNull(),
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    novelId: text("novel_id")
+      .references(() => novelTable.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => ({ unq: unique().on(table.novelId, table.userId) })
+);
 
 export const novelRelations = relations(novelTable, ({ many }) => ({
   chapters: many(chapterTable),

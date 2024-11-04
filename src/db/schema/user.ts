@@ -5,6 +5,8 @@ export const userTable = sqliteTable("user", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
+  type: text("type", { enum: ["user", "admin"] }).default("user"),
+  image: text("image"),
   passwordHash: text("password_hash").notNull(),
   createdAt: text("created_at")
     .notNull()
