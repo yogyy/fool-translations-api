@@ -54,6 +54,7 @@ const [userTest] = await db
     email: "test@mail.id",
     id: "usr_testvcmxmonvpdp6",
     name: "tester",
+    type: "admin",
     passwordHash: hash,
   })
   .returning();
