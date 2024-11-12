@@ -33,21 +33,21 @@ const ratingRoutes = new Hono<AuthContext>()
     const user = c.get("user") as User;
 
     try {
-      const newRating = await db
+      const [newRating] = await db
         .insert(RatingTable)
         .values({ userId: user.id, novelId, rating })
         .returning();
 
-      return c.json(newRating);
+      return c.json({ success: true, data: newRating });
     } catch (err) {
       if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
-        const updateRating = await db
+        const [updateRating] = await db
           .update(RatingTable)
           .set({ rating })
           .where(and(eq(RatingTable.novelId, novelId), eq(RatingTable.userId, user.id)))
           .returning();
 
-        return c.json(updateRating);
+        return c.json({ success: true, data: updateRating });
       }
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
