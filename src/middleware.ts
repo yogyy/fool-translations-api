@@ -29,10 +29,10 @@ export const authentication = createMiddleware<AuthContext>(async (c, next) => {
 
   const { session, user } = await validateSessionToken(sessionId);
 
-  if (session && !c.req.path.startsWith("/api/v1/auth/")) {
-    const token = generateSessionToken();
-    setSessionCookie(c, token, session.expiresAt);
-  }
+  // if (session && !c.req.path.startsWith("/api/v1/auth/")) {
+  //   const token = generateSessionToken();
+  //   setSessionCookie(c, token, session.expiresAt);
+  // }
 
   if (!session) deleteSessionTokenCookie(c);
 
