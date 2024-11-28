@@ -5,9 +5,10 @@ import { SQLiteError } from "bun:sqlite";
 import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import { novelPayloadDTO, byIdParam, editNovelPayloadDTO, chapterPayloadDTO } from "@/lib/dtos";
-import { chapterTable, novelTable } from "@/db/schema/novel";
+import { chapterTable, novelTable, subscribeTable } from "@/db/schema/novel";
 import { generateRandId } from "@/lib/utils";
 import { isAdmin } from "@/middleware";
+import { Notifications, notificationTable } from "@/db/schema/notification";
 
 const adminRoutes = new Hono<AuthContext>()
   .use(isAdmin)
@@ -79,10 +80,28 @@ const adminRoutes = new Hono<AuthContext>()
         .values({ id: generateRandId("ch"), ...body })
         .returning();
 
-      await db
-        .update(novelTable)
-        .set({ last_updated: sql`(current_timestamp)` })
-        .where(eq(novelTable.id, newChapter.novelId));
+      if (newChapter) {
+        await db
+          .update(novelTable)
+          .set({ last_updated: sql`(current_timestamp)` })
+          .where(eq(novelTable.id, newChapter.novelId));
+
+        const userSubs = await db.query.subscribeTable.findMany({
+          where: eq(subscribeTable.novelId, body.novelId),
+          columns: { userId: true },
+        });
+
+        if (userSubs.length > 0) {
+          await db.insert(notificationTable).values(
+            userSubs.map((item) => ({
+              id: generateRandId("ntf"),
+              userId: item.userId,
+              novelId: body.novelId,
+              type: "new_chapter",
+            })) as Notifications[]
+          );
+        }
+      }
 
       return c.json({ success: true, data: newChapter });
     } catch (err) {
