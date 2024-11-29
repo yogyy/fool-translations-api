@@ -62,5 +62,9 @@ export const RatingDTO = GetRating.extend({
 });
 
 export const AllChapterParam = z.object({
-  novelId: CustomID("nvl_", "novelid"),
+  novelId: CustomID("nvl_", "Novel ID"),
+});
+
+export const NotifSeen = z.object({
+  id: CustomID("ntf_", "Notification ID"),
 });

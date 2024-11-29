@@ -89,6 +89,23 @@ export const favoriteTable = sqliteTable(
   (table) => ({ unq: unique().on(table.novelId, table.userId) })
 );
 
+export const subscribeTable = sqliteTable(
+  "novel_subscribe",
+  {
+    id: integer("id").primaryKey(),
+    createdAt: text("created_at")
+      .default(sql`(current_timestamp)`)
+      .notNull(),
+    userId: text("user_id")
+      .references(() => userTable.id, { onDelete: "cascade" })
+      .notNull(),
+    novelId: text("novel_id")
+      .references(() => novelTable.id, { onDelete: "cascade" })
+      .notNull(),
+  },
+  (table) => ({ unq: unique().on(table.novelId, table.userId) })
+);
+
 export const novelRelations = relations(novelTable, ({ many }) => ({
   chapters: many(chapterTable),
   rating: many(RatingTable),
