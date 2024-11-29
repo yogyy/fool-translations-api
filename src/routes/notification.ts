@@ -8,6 +8,11 @@ import { zValidator } from "@hono/zod-validator";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 
+const notAuthorized = {
+  success: false,
+  error: "You are not authorized to access this notification.",
+};
+
 const notificationRoutes = new Hono<AuthContext>()
   .use(isUser)
   .get("/", async (c) => {
@@ -18,9 +23,24 @@ const notificationRoutes = new Hono<AuthContext>()
 
     return c.json({ success: true, data: ntf });
   })
-  .patch("/seen", zValidator("json", NotifSeen), async (c) => {
+  .patch("/", zValidator("json", NotifSeen), async (c) => {
     const { id } = c.req.valid("json");
+    const user = c.get("user") as User;
+
+    const ntf = await db.query.notificationTable.findFirst({ where: eq(notificationTable.id, id) });
+    if (ntf?.userId !== user.id) return c.json(notAuthorized, 403);
+
     await db.update(notificationTable).set({ isRead: true }).where(eq(notificationTable.id, id));
+    return c.json({ success: true });
+  })
+  .delete("/", zValidator("json", NotifSeen), async (c) => {
+    const { id } = c.req.valid("json");
+    const user = c.get("user") as User;
+
+    const ntf = await db.query.notificationTable.findFirst({ where: eq(notificationTable.id, id) });
+    if (ntf?.userId !== user.id) return c.json(notAuthorized, 403);
+
+    await db.delete(notificationTable).where(eq(notificationTable.id, id));
 
     return c.json({ success: true });
   });
