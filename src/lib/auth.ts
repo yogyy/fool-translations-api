@@ -13,8 +13,8 @@ export function generateSessionToken(long = 20): string {
   return token;
 }
 
-const SESSION_REFRESH_INTERVAL_MS = 1000 * 60 * 60 * 24 * 15;
-const SESSION_MAX_DURATION_MS = SESSION_REFRESH_INTERVAL_MS * 2;
+const SESSION_REFRESH_INTERVAL_MS = 1000 * 60 * 60 * 24 * 15; // 15 days
+const SESSION_MAX_DURATION_MS = SESSION_REFRESH_INTERVAL_MS * 2; // 30 days
 export const SESSION_COOKIE_NAME = "session";
 
 export async function createSession(token: string, userId: string): Promise<Session> {
