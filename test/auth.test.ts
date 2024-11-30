@@ -5,6 +5,8 @@ import { db } from "@/db";
 import { userTable } from "@/db/schema/user";
 import { eq } from "drizzle-orm";
 import { invalidateSession, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 describe("User Register", () => {
   test("sign-up with incorrect body", async () => {
@@ -30,12 +32,15 @@ describe("User Register", () => {
       headers: new Headers({ "Content-Type": "application/json" }),
     });
 
-    expect(res.status).toBe(302); // redirected
-    expect(res.headers.get("location")).toStrictEqual("/");
+    expect(res.status).toBe(200);
     expect(res.headers.get("set-cookie")).toBeDefined();
 
+    const token = getCookieValue(SESSION_COOKIE_NAME, res.headers.get("set-cookie")!);
+    expect(await res.json()).toEqual({ success: true, token: token });
+
     // delete session from sign-up
-    const sessionId = getCookieValue(res.headers.get("set-cookie")!, SESSION_COOKIE_NAME);
+    const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token!)));
+    console.log("session id", sessionId);
     await invalidateSession(sessionId!);
   });
 
@@ -82,9 +87,11 @@ describe("User Signin & Signout", () => {
 
     cookieSession = res.headers.get("set-cookie");
 
-    expect(res.status).toBe(302); // redirected
-    expect(res.headers.get("location")).toStrictEqual("/");
+    expect(res.status).toBe(200);
     expect(res.headers.get("set-cookie")).toStrictEqual(cookieSession);
+
+    const token = getCookieValue(SESSION_COOKIE_NAME, cookieSession!);
+    expect(await res.json()).toEqual({ success: true, token: token });
   });
 
   test("sign-out with no cookie", async () => {
@@ -97,18 +104,19 @@ describe("User Signin & Signout", () => {
   });
 
   test("sign-out with cookie", async () => {
+    console.log(cookieSession);
     const res = await app.request("/api/v1/auth/signout", {
       method: "POST",
       headers: new Headers({ Cookie: cookieSession as string }),
     });
 
-    expect(res.status).toBe(302); // redirected
-    expect(res.headers.get("location")).toStrictEqual("/");
+    expect(res.status).toBe(200);
     const cookie = res.headers.get("set-cookie");
     expect(cookie).toEqual(`${SESSION_COOKIE_NAME}=; HttpOnly; SameSite=Lax; Max-Age=0; Path=/`);
+    expect(await res.json()).toStrictEqual({ success: true });
   });
+});
 
-  test("delete registered user test", async () => {
-    await db.delete(userTable).where(eq(userTable.email, registerBody.email));
-  });
+test("delete user testing", async () => {
+  await db.delete(userTable).where(eq(userTable.email, registerBody.email));
 });
