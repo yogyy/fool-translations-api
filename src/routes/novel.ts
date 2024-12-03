@@ -36,7 +36,7 @@ const novelRoutes = new Hono<AuthContext>()
         .limit(pageSize)
         .offset((page - 1) * pageSize);
 
-      return c.json(novels);
+      return c.json({ success: true, data: novels });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);

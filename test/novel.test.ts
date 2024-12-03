@@ -8,17 +8,20 @@ describe("routes get many novels", () => {
     const res = await app.request("/api/v1/novels");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: expect.any(String),
-          title: expect.any(String),
-          genres: expect.any(Array),
-          cover: expect.any(String),
-          totalRatings: expect.any(Number),
-          averageRating: expect.any(String),
-          popularityScore: expect.any(Number),
-        }),
-      ])
+      expect.objectContaining({
+        success: true,
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            title: expect.any(String),
+            genres: expect.any(Array),
+            cover: expect.any(String),
+            totalRatings: expect.any(Number),
+            averageRating: expect.any(String),
+            popularityScore: expect.any(Number),
+          }),
+        ]),
+      })
     );
   });
 
