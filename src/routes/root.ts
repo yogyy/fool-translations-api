@@ -1,22 +1,22 @@
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import { logger } from "hono/logger";
+import { trimTrailingSlash } from "hono/trailing-slash";
 import { AuthContext } from "@/types";
+import { authentication } from "@/middleware";
 import authRoutes from "./auth";
 import novelRoutes from "./novel";
-import { cors } from "hono/cors";
-import chapterRoutes from "./chapter";
-import adminRoutes from "./admin";
-import ratingRoutes from "./rating";
-import { authentication } from "@/middleware";
-import favoriteRoutes from "./favorite";
-import { trimTrailingSlash } from "hono/trailing-slash";
+import adminRoutes from "./novel/admin";
+import ratingRoutes from "./novel/rating";
+import chapterRoutes from "./novel/chapter";
+import favoriteRoutes from "./novel/favorite";
+import subscribeRoutes from "./novel/subscribe";
 import notificationRoutes from "./notification";
-import subscribeRoutes from "./subscribe";
 
 const app = new Hono<AuthContext>()
   .basePath("/api/v1")
-  .use("*", logger(), cors({ origin: ["http://localhost:5173"], credentials: true }))
   .use(trimTrailingSlash())
+  .use("*", logger(), cors({ origin: ["http://localhost:5173"], credentials: true }))
   .use("*", authentication)
   .route("/auth", authRoutes)
   .route("/novels", novelRoutes)

@@ -9,6 +9,7 @@ import { chapterTable, novelTable, subscribeTable } from "@/db/schema/novel";
 import { generateRandId } from "@/lib/utils";
 import { isAdmin } from "@/middleware";
 import { Notifications, notificationTable } from "@/db/schema/notification";
+import { addNewNovel } from "@/services/admin.service";
 
 const adminRoutes = new Hono<AuthContext>()
   .use(isAdmin)
@@ -16,10 +17,7 @@ const adminRoutes = new Hono<AuthContext>()
     const body = c.req.valid("json");
 
     try {
-      const [newNovel] = await db
-        .insert(novelTable)
-        .values({ id: generateRandId("nvl"), ...body })
-        .returning();
+      const newNovel = await addNewNovel(body);
       return c.json({ success: true, data: newNovel });
     } catch (err) {
       if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
