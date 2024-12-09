@@ -5,10 +5,10 @@ import { db } from "@/db";
 import { Chapter, chapterTable } from "@/db/schema/novel";
 import { eq } from "drizzle-orm";
 
-describe("/chapters", () => {
+describe("chapters test", () => {
   let chapterTest: { success: boolean; data: Chapter };
 
-  test("should success add new chapter", async () => {
+  test("POST /admin/chapter, should success add new chapter", async () => {
     const res = await app.request("/api/v1/admin/chapter", {
       method: "POST",
       body: JSON.stringify(newChapter),
@@ -19,9 +19,6 @@ describe("/chapters", () => {
     });
 
     chapterTest = await res.json();
-
-    console.log(chapterTest);
-
     expect(res.status).toBe(200);
     expect(chapterTest).toEqual(
       expect.objectContaining({
@@ -38,7 +35,7 @@ describe("/chapters", () => {
     );
   });
 
-  it("should return 400 if novelId is missing", async () => {
+  it("GET /chapters?novelId, should return 400 if novelId is missing", async () => {
     const res = await app.request("/api/v1/chapters");
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({
@@ -58,7 +55,7 @@ describe("/chapters", () => {
     });
   });
 
-  it("should return 404 if no novel's chapters are found", async () => {
+  it("GET /chapters?novelId, should return 404 if no novel's chapter are found", async () => {
     const res = await app.request("/api/v1/chapters?novelId=nvl_wrongnovelid0000");
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({
@@ -67,7 +64,7 @@ describe("/chapters", () => {
     });
   });
 
-  it("should return success when novel's chapters are found", async () => {
+  it("GET /chapters?novelId, should return 200 when novel's chapters are found", async () => {
     const { novelId } = chapterTest.data;
     const res = await app.request(`/api/v1/chapters?novelId=${novelId}`);
     expect(res.status).toBe(200);
@@ -85,7 +82,7 @@ describe("/chapters", () => {
     });
   });
 
-  it("should return success when novel's chapters are found", async () => {
+  it("GET /chapters/:id, should return success when novel's chapters are found", async () => {
     const { id } = chapterTest.data;
     const res = await app.request(`/api/v1/chapters/${id}`);
     expect(res.status).toBe(200);
@@ -116,7 +113,7 @@ describe("/chapters", () => {
     );
   });
 
-  test("should delete a chapter ", async () => {
+  test("DELETE /admin/chapter/:id, should delete a chapter ", async () => {
     const { id } = chapterTest.data;
     const res = await app.request(`/api/v1/admin/chapter/${id}`, {
       method: "DELETE",
