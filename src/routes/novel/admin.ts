@@ -1,15 +1,20 @@
 import { AuthContext } from "@/types";
 import { Hono } from "hono";
-import { db } from "@/db";
 import { SQLiteError } from "bun:sqlite";
-import { eq, sql } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import { novelPayloadDTO, byIdParam, editNovelPayloadDTO, chapterPayloadDTO } from "@/lib/dtos";
-import { chapterTable, novelTable, subscribeTable } from "@/db/schema/novel";
-import { generateRandId } from "@/lib/utils";
 import { isAdmin } from "@/middleware";
-import { Notifications, notificationTable } from "@/db/schema/notification";
-import { addNewNovel } from "@/services/admin.service";
+import {
+  getNovel,
+  addChapter,
+  updateNovel,
+  addNewNovel,
+  deleteNovel,
+  deleteChapter,
+  updateChapter,
+  notifySubscribers,
+  updateLastUpdatedForNovel,
+} from "@/services/admin.service";
 
 const adminRoutes = new Hono<AuthContext>()
   .use(isAdmin)
@@ -36,14 +41,10 @@ const adminRoutes = new Hono<AuthContext>()
       const body = c.req.valid("json");
 
       try {
-        const [editedNovel] = await db
-          .update(novelTable)
-          .set({ ...body, last_updated: sql`(current_timestamp)` })
-          .where(eq(novelTable.id, id))
-          .returning();
-        if (!editedNovel) return c.json({ success: false, error: "Novel Not Found" }, 404);
+        const updatedNovel = await updateNovel(body, id);
+        if (!updatedNovel) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
-        return c.json({ success: true, data: editedNovel });
+        return c.json({ success: true, data: updatedNovel });
       } catch (err) {
         console.log(err);
         return c.json({ error: "Internal Server Errror" }, 500);
@@ -54,13 +55,10 @@ const adminRoutes = new Hono<AuthContext>()
     const { id } = c.req.valid("param");
 
     try {
-      const [deleted] = await db
-        .delete(novelTable)
-        .where(eq(novelTable.id, id))
-        .returning({ id: novelTable.id });
-      if (!deleted) return c.json({ success: false, error: "Novel Not Found" }, 404);
+      const novel = await deleteNovel(id);
+      if (!novel) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
-      return c.json({ success: true, data: `Novel ${deleted.id} Deleted.` });
+      return c.json({ success: true, data: `Novel ${novel.id} Deleted.` });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
@@ -70,35 +68,14 @@ const adminRoutes = new Hono<AuthContext>()
     const body = c.req.valid("json");
 
     try {
-      const novel = await db.query.novelTable.findFirst({ where: eq(novelTable.id, body.novelId) });
+      const novel = await getNovel(body.novelId);
       if (!novel) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
-      const [newChapter] = await db
-        .insert(chapterTable)
-        .values({ id: generateRandId("ch"), ...body })
-        .returning();
+      const newChapter = await addChapter(body);
 
       if (newChapter) {
-        await db
-          .update(novelTable)
-          .set({ last_updated: sql`(current_timestamp)` })
-          .where(eq(novelTable.id, newChapter.novelId));
-
-        const userSubs = await db.query.subscribeTable.findMany({
-          where: eq(subscribeTable.novelId, body.novelId),
-          columns: { userId: true },
-        });
-
-        if (userSubs.length > 0) {
-          await db.insert(notificationTable).values(
-            userSubs.map((item) => ({
-              id: generateRandId("ntf"),
-              userId: item.userId,
-              novelId: body.novelId,
-              type: "new_chapter",
-            })) as Notifications[]
-          );
-        }
+        await updateLastUpdatedForNovel(newChapter.novelId);
+        await notifySubscribers(body);
       }
 
       return c.json({ success: true, data: newChapter });
@@ -121,27 +98,31 @@ const adminRoutes = new Hono<AuthContext>()
       const { id } = c.req.valid("param");
       const body = c.req.valid("json");
 
-      const [updated] = await db
-        .update(chapterTable)
-        .set({ ...body })
-        .where(eq(chapterTable.id, id))
-        .returning();
-      if (!updated) return c.json({ success: false, error: "Chapter Not Found" }, 404);
+      try {
+        const updatedChapter = await updateChapter(body, id);
+        if (!updatedChapter) return c.json({ success: false, error: "Chapter Not Found" }, 404);
 
-      return c.json(updated);
+        return c.json({ success: true, data: updatedChapter });
+      } catch (err) {
+        if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+          return c.json(
+            { success: false, error: `Chapter ${body.chapterNum} of this Novel Already Exists` },
+            400
+          );
+        }
+        console.log(err);
+        return c.json({ error: "Internal Server Errror" }, 500);
+      }
     }
   )
   .delete("/chapter/:id", zValidator("param", byIdParam("ch_")), async (c) => {
     const { id } = c.req.valid("param");
 
     try {
-      const [deleted] = await db
-        .delete(chapterTable)
-        .where(eq(chapterTable.id, id))
-        .returning({ id: chapterTable.id });
-      if (!deleted) return c.json({ success: false, error: "Chapter Not Found" }, 404);
+      const chapter = await deleteChapter(id);
+      if (!chapter) return c.json({ success: false, error: "Chapter Not Found" }, 404);
 
-      return c.json({ success: true, data: `Chapter ${deleted.id} Deleted.` });
+      return c.json({ success: true, data: `Chapter ${chapter.id} Deleted.` });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
