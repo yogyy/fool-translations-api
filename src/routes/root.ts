@@ -27,4 +27,5 @@ const app = new Hono<AuthContext>()
   .route("/admin", adminRoutes)
   .route("/notifications", notificationRoutes);
 
+// showRoutes(app); // to show available routes
 export default app;
