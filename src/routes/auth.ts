@@ -1,12 +1,10 @@
 import { Hono } from "hono";
-import { db } from "@/db";
-import { eq } from "drizzle-orm";
 import { AuthContext } from "@/types";
 import { SQLiteError } from "bun:sqlite";
-import { userTable } from "@/db/schema/user";
 import { generateRandId } from "@/lib/utils";
 import { zValidator } from "@hono/zod-validator";
 import { userSigninDTO, userSignupDTO } from "@/lib/dtos";
+import { createUser, findUserByEmail } from "@/services/auth.service";
 import { deleteSessionTokenCookie, setSessionCookie } from "@/lib/session";
 import { createSession, generateSessionToken, invalidateSession } from "@/lib/auth";
 
@@ -23,7 +21,7 @@ const authRoutes = new Hono<AuthContext>()
 
     const userId = generateRandId("usr");
     try {
-      await db.insert(userTable).values({ email, id: userId, name, passwordHash: hash });
+      await createUser(email, userId, name, hash);
 
       const token = generateSessionToken();
       const session = await createSession(token, userId);
@@ -42,7 +40,7 @@ const authRoutes = new Hono<AuthContext>()
     const { email, password } = c.req.valid("json");
 
     try {
-      const user = await db.query.userTable.findFirst({ where: eq(userTable.email, email) });
+      const user = await findUserByEmail(email);
       if (!user) {
         return c.json({ success: false, error: "Invalid Username or Password." }, 401);
       }
