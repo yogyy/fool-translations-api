@@ -7,5 +7,5 @@ export async function createUser(email: string, id: string, name: string, hash: 
 }
 
 export async function findUserByEmail(email: string) {
-  return await db.query.userTable.findFirst({ where: eq(userTable.email, email) });
+  return await db.query.userTable.findFirst({ where: eq(userTable.email, email.toLowerCase()) });
 }
