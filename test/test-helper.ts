@@ -48,6 +48,7 @@ export const ExpectedNovel = expect.objectContaining({
 });
 
 // run seeding to get new cookie for testing
-export const cookieTest = "";
+// or make sure add session of a admin user
+export const cookieTest = "session=blablabla";
 
 export const registerBody = { ...loginBody, name: "tester" };
