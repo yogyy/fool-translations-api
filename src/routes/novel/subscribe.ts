@@ -4,7 +4,7 @@ import { AuthContext } from "@/types";
 import { zValidator } from "@hono/zod-validator";
 import { and, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { GetRating as NovelById } from "@/lib/dtos";
+import { novelIdValidation as NovelById } from "@/lib/dtos";
 import { isUser } from "@/middleware";
 import { User } from "@/db/schema/user";
 import { SQLiteError } from "bun:sqlite";

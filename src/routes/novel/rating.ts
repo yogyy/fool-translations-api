@@ -5,13 +5,13 @@ import { SQLiteError } from "bun:sqlite";
 import { AuthContext } from "@/types";
 import { isUser } from "@/middleware";
 import { RatingTable } from "@/db/schema/novel";
-import { GetRating, RatingDTO } from "@/lib/dtos";
+import { novelIdValidation, RatingDTO } from "@/lib/dtos";
 import { db } from "@/db";
 import { User } from "@/db/schema/user";
 
 const ratingRoutes = new Hono<AuthContext>()
   .use(isUser)
-  .get("/:novelId", zValidator("param", GetRating), async (c) => {
+  .get("/:novelId", zValidator("param", novelIdValidation), async (c) => {
     const { novelId } = c.req.valid("param");
     const user = c.get("user") as User;
 

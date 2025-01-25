@@ -10,7 +10,7 @@ import { and, count, eq } from "drizzle-orm";
 import { SQLiteError } from "bun:sqlite";
 
 const favoriteRoutes = new Hono<AuthContext>()
-  .get("/:novelId", zValidator("param", FavNovel), async (c) => {
+  .get("/:novelId", zValidator("param", novelIdValidation), async (c) => {
     const { novelId } = c.req.valid("param");
     const user = c.get("user");
 
@@ -43,7 +43,7 @@ const favoriteRoutes = new Hono<AuthContext>()
     }
   })
   .use(isUser)
-  .post("/", zValidator("json", FavNovel), async (c) => {
+  .post("/", zValidator("json", novelIdValidation), async (c) => {
     const { novelId } = c.req.valid("json");
     const user = c.get("user") as User;
 
