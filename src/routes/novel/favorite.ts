@@ -5,7 +5,7 @@ import { zValidator } from "@hono/zod-validator";
 import { db } from "@/db";
 import { User } from "@/db/schema/user";
 import { favoriteTable } from "@/db/schema/novel";
-import { GetRating as FavNovel } from "@/lib/dtos";
+import { novelIdValidation } from "@/lib/dtos";
 import { and, count, eq } from "drizzle-orm";
 import { SQLiteError } from "bun:sqlite";
 
@@ -22,7 +22,7 @@ const favoriteRoutes = new Hono<AuthContext>()
 
       const noFavorited = c.json({
         success: true,
-        data: { isFavorited: false, totalFavorites: totalFav.count },
+        data: { isFavorited: false, total: totalFav.count },
       });
 
       if (!user) return noFavorited;
@@ -35,7 +35,7 @@ const favoriteRoutes = new Hono<AuthContext>()
 
       return c.json({
         success: true,
-        data: { isFavorited: true, totalFavorites: totalFav.count },
+        data: { isFavorited: true, total: totalFav.count },
       });
     } catch (err) {
       console.log(err);

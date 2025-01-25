@@ -52,7 +52,7 @@ const subscribeRoutes = new Hono<AuthContext>()
 
       return c.json({
         success: true,
-        action: "add",
+        action: "added",
         data: "You've subscribed to this novel",
       });
     } catch (err) {
@@ -63,7 +63,7 @@ const subscribeRoutes = new Hono<AuthContext>()
 
         return c.json({
           success: true,
-          action: "delete",
+          action: "deleted",
           data: "You've unsubscribed from this novel",
         });
       }
