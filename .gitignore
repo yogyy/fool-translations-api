@@ -1,4 +1,13 @@
-node_modules
+# deps
+node_modules/
+.wrangler/
+
 
 src/db/*.sqlite
-.env*
+
+# env
+.env
+.env.production
+.dev.vars
+
+
