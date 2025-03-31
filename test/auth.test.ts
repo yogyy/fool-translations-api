@@ -1,16 +1,12 @@
-import app from "@/routes/root";
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { getCookieValue, loginBody, registerBody } from "./test-helper";
-import { db } from "@/db";
-import { userTable } from "@/db/schema/user";
-import { eq } from "drizzle-orm";
 import { invalidateSession, SESSION_COOKIE_NAME } from "@/lib/auth";
-import { encodeHexLowerCase } from "@oslojs/encoding";
-import { sha256 } from "@oslojs/crypto/sha2";
+
+const root = "http://127.0.0.1:8787/api/v1/auth";
 
 describe("User Register", () => {
   test("sign-up with incorrect body", async () => {
-    const res = await app.request("/api/v1/auth/signup", {
+    const res = await fetch(`${root}/signup`, {
       method: "POST",
       body: JSON.stringify({}),
     });
@@ -26,7 +22,7 @@ describe("User Register", () => {
   });
 
   test("signup with correct body", async () => {
-    const res = await app.request("/api/v1/auth/signup", {
+    const res = await fetch(`${root}/signup`, {
       method: "POST",
       body: JSON.stringify(registerBody),
       headers: new Headers({ "Content-Type": "application/json" }),
@@ -38,18 +34,18 @@ describe("User Register", () => {
     const token = getCookieValue(SESSION_COOKIE_NAME, res.headers.get("set-cookie")!);
     expect(await res.json()).toEqual({ success: true, token: token });
 
-    // delete session from sign-up
-    const sessionId = encodeHexLowerCase(sha256(new TextEncoder().encode(token!)));
-    console.log("session id", sessionId);
-    await invalidateSession(sessionId!);
+    await fetch(`${root}/invalidate`, {
+      headers: new Headers({ Cookie: `session=${token}` }),
+    }).then(async (res) => expect(await res.json()).toEqual({ success: true }));
   });
 
   test("signup with existing email", async () => {
-    const res = await app.request("/api/v1/auth/signup", {
+    const res = await fetch(`${root}/signup`, {
       method: "POST",
       body: JSON.stringify(registerBody),
       headers: new Headers({ "Content-Type": "application/json" }),
     });
+
     expect(res.status).toBe(400);
     expect(await res.json()).toStrictEqual({
       success: false,
@@ -62,7 +58,7 @@ describe("User Signin & Signout", () => {
   let cookieSession: string | null;
 
   test("sign-in with incorrect body", async () => {
-    const res = await app.request("/api/v1/auth/signin", {
+    const res = await fetch(`${root}/signin`, {
       method: "POST",
       body: JSON.stringify({}),
     });
@@ -79,7 +75,7 @@ describe("User Signin & Signout", () => {
   });
 
   test("sign-in with correct body", async () => {
-    const res = await app.request("/api/v1/auth/signin", {
+    const res = await fetch(`${root}/signin`, {
       method: "POST",
       body: JSON.stringify(loginBody),
       headers: new Headers({ "Content-Type": "application/json" }),
@@ -95,7 +91,7 @@ describe("User Signin & Signout", () => {
   });
 
   test("sign-out with no cookie", async () => {
-    const res = await app.request("/api/v1/auth/signout", {
+    const res = await fetch(`${root}/signout`, {
       method: "POST",
       headers: new Headers({}),
     });
@@ -105,7 +101,7 @@ describe("User Signin & Signout", () => {
 
   test("sign-out with cookie", async () => {
     console.log(cookieSession);
-    const res = await app.request("/api/v1/auth/signout", {
+    const res = await fetch(`${root}/signout`, {
       method: "POST",
       headers: new Headers({ Cookie: cookieSession as string }),
     });
@@ -117,6 +113,14 @@ describe("User Signin & Signout", () => {
   });
 });
 
-test("delete user testing", async () => {
-  await db.delete(userTable).where(eq(userTable.email, registerBody.email));
+describe("delete user testing", async () => {
+  test("POST /delete-testing", async () => {
+    const res = await fetch(`${root}/delete-testing`, {
+      method: "POST",
+      body: JSON.stringify(registerBody),
+      headers: new Headers({ "Content-Type": "application/json" }),
+    });
+
+    expect(await res.json()).toEqual({ success: true });
+  });
 });
