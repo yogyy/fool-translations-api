@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fool-translation",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-21",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "fool-translations",
+      "database_id": "b8873314-e91a-4cd6-9b47-a0fa3a409f9d",
+      "migrations_dir": "drizzle",
+      "migrations_table": "__drizzle_migrations"
+    }
+  ]
+}
