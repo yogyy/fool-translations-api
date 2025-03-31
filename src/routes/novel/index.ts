@@ -1,14 +1,18 @@
-import { db } from "@/db";
+import { createDB } from "@/db";
 import { Hono } from "hono";
 import { avg, count, desc, eq, sql, SQLWrapper } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
 import { byIdParam, AllNovelParams } from "@/lib/dtos";
 import { novelTable, RatingTable } from "@/db/schema/novel";
-import { AuthContext } from "@/types";
+import { AppContext } from "@/types";
+import ratingRoutes from "./rating";
+import favoriteRoutes from "./favorite";
+import subscribeRoutes from "./subscribe";
 
-const novelRoutes = new Hono<AuthContext>()
+const novelRoutes = new Hono<AppContext>()
   .get("/", zValidator("query", AllNovelParams), async (c) => {
     const { sort, status, genre, page, pageSize } = c.req.valid("query");
+    const db = createDB(c.env);
 
     const orderColumn: SQLWrapper =
       sort === "recent"
@@ -43,6 +47,7 @@ const novelRoutes = new Hono<AuthContext>()
     }
   })
   .get("/featured/hot", async (c) => {
+    const db = createDB(c.env);
     try {
       const hotNovels = await db.query.SpotlightTable.findMany();
 
@@ -53,6 +58,7 @@ const novelRoutes = new Hono<AuthContext>()
     }
   })
   .get("/featured/top", async (c) => {
+    const db = createDB(c.env);
     try {
       const topnovels = await db
         .select({
@@ -74,6 +80,7 @@ const novelRoutes = new Hono<AuthContext>()
   })
   .get("/:id", zValidator("param", byIdParam("nvl_")), async (c) => {
     const { id } = c.req.valid("param");
+    const db = createDB(c.env);
 
     const updateView = db
       .update(novelTable)
@@ -82,14 +89,7 @@ const novelRoutes = new Hono<AuthContext>()
       .prepare();
 
     try {
-      const novelbyId = await db.query.novelTable.findFirst({
-        where: eq(novelTable.id, id),
-        with: {
-          chapters: {
-            columns: { id: true, title: true, chapterNum: true },
-          },
-        },
-      });
+      const novelbyId = await db.query.novelTable.findFirst({ where: eq(novelTable.id, id) });
       if (!novelbyId) return c.json({ success: false, error: "Novel Not Found" }, 404);
 
       const [rating] = await db
@@ -100,15 +100,15 @@ const novelRoutes = new Hono<AuthContext>()
       updateView.run();
       return c.json({
         success: true,
-        data: {
-          ...novelbyId,
-          average_rating: Number(rating.value),
-        },
+        data: { ...novelbyId, average_rating: Number(rating.value) },
       });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
     }
-  });
+  })
+  .route("/:id/rating", ratingRoutes)
+  .route("/:id/favorite", favoriteRoutes)
+  .route("/:id/subscribe", subscribeRoutes);
 
 export default novelRoutes;

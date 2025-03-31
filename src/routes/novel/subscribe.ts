@@ -1,24 +1,25 @@
-import { db } from "@/db";
 import { subscribeTable } from "@/db/schema/novel";
-import { AuthContext } from "@/types";
+import { AppContext } from "@/types";
 import { zValidator } from "@hono/zod-validator";
 import { and, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
-import { novelIdValidation as NovelById } from "@/lib/dtos";
+import { byIdParam } from "@/lib/dtos";
 import { isUser } from "@/middleware";
 import { User } from "@/db/schema/user";
-import { SQLiteError } from "bun:sqlite";
+import { createDB } from "@/db";
+import { UNIQUE_CONSTRAINT } from "@/lib/utils";
 
-const subscribeRoutes = new Hono<AuthContext>()
-  .get("/:novelId", zValidator("param", NovelById), async (c) => {
-    const { novelId } = c.req.valid("param");
+const subscribeRoutes = new Hono<AppContext>()
+  .get("/", zValidator("param", byIdParam("nvl_")), async (c) => {
+    const { id } = c.req.valid("param");
     const user = c.get("user");
+    const db = createDB(c.env);
 
     try {
       const [totalSubs] = await db
         .select({ count: count() })
         .from(subscribeTable)
-        .where(eq(subscribeTable.novelId, novelId));
+        .where(eq(subscribeTable.novelId, id));
 
       const noSubs = c.json({
         success: true,
@@ -28,7 +29,7 @@ const subscribeRoutes = new Hono<AuthContext>()
       if (!user) return noSubs;
 
       const favorited = await db.query.subscribeTable.findFirst({
-        where: and(eq(subscribeTable.novelId, novelId), eq(subscribeTable.userId, user.id)),
+        where: and(eq(subscribeTable.novelId, id), eq(subscribeTable.userId, user.id)),
       });
 
       if (!favorited) return noSubs;
@@ -43,28 +44,25 @@ const subscribeRoutes = new Hono<AuthContext>()
     }
   })
   .use(isUser)
-  .post("/notify", zValidator("json", NovelById), async (c) => {
-    const { novelId } = c.req.valid("json");
+  .post("/", zValidator("param", byIdParam("nvl_")), async (c) => {
+    const { id } = c.req.valid("param");
     const user = c.get("user") as User;
+    const db = createDB(c.env);
 
     try {
-      await db.insert(subscribeTable).values({ userId: user.id, novelId }).returning();
+      await db.insert(subscribeTable).values({ userId: user.id, novelId: id });
 
-      return c.json({
-        success: true,
-        action: "added",
-        data: "You've subscribed to this novel",
-      });
-    } catch (err) {
-      if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return c.json({ success: true, action: "added", message: "You've subscribed to this novel" });
+    } catch (err: any) {
+      if (err.message.includes(UNIQUE_CONSTRAINT)) {
         await db
           .delete(subscribeTable)
-          .where(and(eq(subscribeTable.novelId, novelId), eq(subscribeTable.userId, user.id)));
+          .where(and(eq(subscribeTable.novelId, id), eq(subscribeTable.userId, user.id)));
 
         return c.json({
           success: true,
-          action: "deleted",
-          data: "You've unsubscribed from this novel",
+          action: "removed",
+          message: "You've unsubscribed from this novel",
         });
       }
       console.log(err);
