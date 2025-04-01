@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { sqliteTable, text, integer, check, unique } from "drizzle-orm/sqlite-core";
 import { userTable } from "./user";
 import { novelTable } from "./novel";
@@ -24,5 +24,12 @@ export const notificationTable = sqliteTable(
     ),
   })
 );
+
+export const notifyRelation = relations(notificationTable, ({ one }) => ({
+  novel: one(novelTable, {
+    fields: [notificationTable.novelId],
+    references: [novelTable.id],
+  }),
+}));
 
 export type Notifications = typeof notificationTable.$inferInsert;
