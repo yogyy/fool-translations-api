@@ -1,0 +1,26 @@
+meta {
+  name: add novel
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{URL}}/admin/novel
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "title example 200",
+    "synopsis": "lorem200",
+    "author": "yogyy",
+    "banner": "", // must be valid url or empty string
+    "cover": "", // must be valid url or empty string
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Mysteries"
+    ]
+  }
+}

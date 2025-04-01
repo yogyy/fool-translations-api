@@ -1,0 +1,21 @@
+meta {
+  name: add novel to subscribe
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{URL}}/novels/:id/subscribe
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: nvl_x3pzgwcjld3236cz
+}
+
+body:json {
+  {
+    "novelId": ""
+  }
+}

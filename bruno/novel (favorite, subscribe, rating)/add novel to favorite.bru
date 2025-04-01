@@ -1,0 +1,21 @@
+meta {
+  name: add novel to favorite
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}//novels/:id/favorite
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: nvl_x3pzgwcjld3236cz
+}
+
+body:json {
+  {
+    "novelId": "nvl_x3pzgwcjld3236cz"
+  }
+}

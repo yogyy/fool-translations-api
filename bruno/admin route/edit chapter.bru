@@ -1,0 +1,23 @@
+meta {
+  name: edit chapter
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{URL}}/admin/chapter/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: ch_yk5ehsktx77uuite
+}
+
+body:json {
+  {
+    "title": "chapter edited",
+    "chapterNum": 3,
+    "content": "chapter sadasdasd"
+  }
+}

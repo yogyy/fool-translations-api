@@ -1,0 +1,15 @@
+meta {
+  name: invalidate session
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{URL}}/auth/invalidate
+  body: none
+  auth: inherit
+}
+
+headers {
+  Cookie: session=36ikqoplwjleoa4wbgxjwjewprxbdpzx
+}

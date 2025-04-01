@@ -1,0 +1,11 @@
+meta {
+  name: validate session
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{URL}}/auth/validate
+  body: none
+  auth: inherit
+}
