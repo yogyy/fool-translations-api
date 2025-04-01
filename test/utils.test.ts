@@ -1,9 +1,9 @@
 import { generateRandId } from "@/lib/utils";
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
 
 test("should generate random string with 16 length", () => {
   const id = generateRandId();
-  expect(id).toBeString();
+  expect(id).toBeTypeOf("string");
   expect(id).toHaveLength(16);
 });
 

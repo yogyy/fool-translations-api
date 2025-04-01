@@ -1,0 +1,30 @@
+meta {
+  name: update novel
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{URL}}/admin/novel/:id
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: nvl_so624vkgexe7gv6m
+}
+
+body:json {
+  {
+    "title": "title updated 200",
+    "synopsis": "lorem200",
+    "author": "yogyy",
+    "banner": "", // must be valid url or empty string
+    "cover": "", // must be valid url or empty string
+    "genres": [
+      "Action",
+      "Fantasy",
+      "Mysteries"
+    ]
+  }
+}

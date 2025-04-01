@@ -1,6 +1,5 @@
 import { Hono } from "hono";
-import { AuthContext } from "@/types";
-import { SQLiteError } from "bun:sqlite";
+import { AppContext } from "@/types";
 import { generateRandId } from "@/lib/utils";
 import { zValidator } from "@hono/zod-validator";
 import { userSigninDTO, userSignupDTO } from "@/lib/dtos";
@@ -8,28 +7,35 @@ import { createUser, findUserByEmail } from "@/services/auth.service";
 import { deleteSessionTokenCookie, setSessionCookie } from "@/lib/session";
 import { createSession, generateSessionToken, invalidateSession } from "@/lib/auth";
 
-const authRoutes = new Hono<AuthContext>()
+const authRoutes = new Hono<AppContext>()
   .get("/validate", async (c) => {
     const user = c.get("user");
     const session = c.get("session");
 
     return c.json({ user, session });
   })
+  .get("/invalidate", async (c) => {
+    const session = c.get("session");
+    if (!session) return c.newResponse("Unauthorized", 401);
+
+    await invalidateSession(c.env, session.id);
+
+    return c.json({ success: true });
+  })
   .post("/signup", zValidator("json", userSignupDTO), async (c) => {
     const { email, name, password } = c.req.valid("json");
-    const hash = await Bun.password.hash(password);
 
     const userId = generateRandId("usr");
     try {
-      await createUser(email, userId, name, hash);
+      await createUser(c.env, email, userId, name, password);
 
       const token = generateSessionToken();
-      const session = await createSession(token, userId);
+      const session = await createSession(c.env, token, userId);
       setSessionCookie(c, token, session.expiresAt);
 
       return c.json({ success: true, token });
-    } catch (err) {
-      if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+    } catch (err: any) {
+      if (err.message.includes("emailUniqueIndex")) {
         return c.json({ success: false, error: "Email Already Used" }, 400);
       }
       console.log(err);
@@ -40,18 +46,18 @@ const authRoutes = new Hono<AuthContext>()
     const { email, password } = c.req.valid("json");
 
     try {
-      const user = await findUserByEmail(email);
+      const user = await findUserByEmail(c.env, email);
       if (!user) {
         return c.json({ success: false, error: "Invalid Username or Password." }, 401);
       }
 
-      const passwordMatch = Bun.password.verify(password, user.passwordHash);
+      const passwordMatch = password === user.passwordHash;
       if (!passwordMatch) {
         return c.json({ success: false, error: "Invalid Username or Password." }, 401);
       }
 
       const token = generateSessionToken();
-      const session = await createSession(token, user?.id);
+      const session = await createSession(c.env, token, user?.id);
       setSessionCookie(c, token, session.expiresAt);
 
       return c.json({ success: true, token });
@@ -62,9 +68,9 @@ const authRoutes = new Hono<AuthContext>()
   })
   .post("/signout", async (c) => {
     const session = c.get("session");
-    if (!session) return c.newResponse("", 401);
+    if (!session) return c.newResponse("Unauthorized", 401);
 
-    await invalidateSession(session.id);
+    await invalidateSession(c.env, session.id);
     deleteSessionTokenCookie(c);
 
     return c.json({ success: true });

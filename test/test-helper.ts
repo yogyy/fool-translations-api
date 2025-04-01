@@ -1,4 +1,4 @@
-import { expect } from "bun:test";
+import { expect } from "vitest";
 
 export const loginBody = {
   email: "test@dev.local",
@@ -28,7 +28,7 @@ export const updateNovel = {
 
 export const newChapter = {
   title: "chapter test",
-  novelId: "nvl_ybttnrfvjibegksk", // add novel id from seeding
+  novelId: "nvl_x3pzgwcjld3236cz", // add novel id from seeding
   chapterNum: 5,
   content: "chapter 0000000000",
 };
@@ -47,8 +47,10 @@ export const ExpectedNovel = expect.objectContaining({
   last_updated: expect.any(String),
 });
 
+export const localURL = "http://127.0.0.1:8787/api/v1";
+
 // run seeding to get new cookie for testing
 // or make sure add session of a admin user
-export const cookieTest = "session=blablabla";
+export const cookieTest = "session=zq4opx5wgqtxcyzvcbi7hyy7yewkz4gk";
 
 export const registerBody = { ...loginBody, name: "tester" };

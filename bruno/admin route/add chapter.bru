@@ -1,0 +1,20 @@
+meta {
+  name: add chapter
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}/admin/chapter
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "title": "chapter test",
+    "novelId": "nvl_so624vkgexe7gv6m",
+    "chapterNum": 16,
+    "content": "chapter 0000000000"
+  }
+}

@@ -40,9 +40,7 @@ export const chapterPayloadDTO = z.object({
 });
 
 export const byIdParam = (param: string) => {
-  return z.object({
-    id: CustomID(param),
-  });
+  return z.object({ id: CustomID(param) });
 };
 
 export const AllNovelParams = z.object({
@@ -55,10 +53,6 @@ export const AllNovelParams = z.object({
 
 export const novelIdValidation = z.object({
   novelId: CustomID("nvl_", "Novel ID"),
-});
-
-export const RatingDTO = novelIdValidation.extend({
-  rating: z.number().min(1).max(10),
 });
 
 export const AllChapterParam = z.object({

@@ -1,53 +1,68 @@
 import { Hono } from "hono";
 import { and, eq } from "drizzle-orm";
 import { zValidator } from "@hono/zod-validator";
-import { SQLiteError } from "bun:sqlite";
-import { AuthContext } from "@/types";
-import { isUser } from "@/middleware";
-import { RatingTable } from "@/db/schema/novel";
-import { novelIdValidation, RatingDTO } from "@/lib/dtos";
-import { db } from "@/db";
-import { User } from "@/db/schema/user";
 
-const ratingRoutes = new Hono<AuthContext>()
+import { AppContext } from "@/types";
+import { isUser } from "@/middleware";
+import { RatingTable as table } from "@/db/schema/novel";
+import { byIdParam } from "@/lib/dtos";
+import { createDB } from "@/db";
+import { User } from "@/db/schema/user";
+import { UNIQUE_CONSTRAINT } from "@/lib/utils";
+import { z } from "zod";
+
+export const RatingDTO = z.object({
+  rating: z.number().min(1).max(10),
+});
+
+const ratingRoutes = new Hono<AppContext>()
   .use(isUser)
-  .get("/:novelId", zValidator("param", novelIdValidation), async (c) => {
-    const { novelId } = c.req.valid("param");
+  .get("/", zValidator("param", byIdParam("nvl_")), async (c) => {
+    const { id } = c.req.valid("param");
     const user = c.get("user") as User;
+    const db = createDB(c.env);
 
     try {
       const userRating = await db.query.RatingTable.findFirst({
-        where: and(eq(RatingTable.novelId, novelId), eq(RatingTable.userId, user.id)),
+        where: and(eq(table.novelId, id), eq(table.userId, user.id)),
       });
 
-      if (!userRating) return c.json({ success: false, error: "Rating Not Found" });
+      if (!userRating) return c.json({ success: true, data: { isRated: true, rating: 0 } });
 
-      return c.json({ success: true, data: userRating });
+      return c.json({ success: true, data: { isRated: true, rating: userRating.rating } });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
     }
   })
-  .post("/rate", zValidator("json", RatingDTO), async (c) => {
-    const { novelId, rating } = c.req.valid("json");
+  .post("/", zValidator("param", byIdParam("nvl_")), zValidator("json", RatingDTO), async (c) => {
+    const { id } = c.req.valid("param");
+    const { rating } = c.req.valid("json");
     const user = c.get("user") as User;
+    const db = createDB(c.env);
+
+    const dataReturned = { novelId: table.novelId, userId: table.userId, rate: table.rating };
 
     try {
       const [newRating] = await db
-        .insert(RatingTable)
-        .values({ userId: user.id, novelId, rating })
-        .returning();
+        .insert(table)
+        .values({ userId: user.id, novelId: id, rating })
+        .returning(dataReturned);
 
-      return c.json({ success: true, data: newRating });
-    } catch (err) {
-      if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return c.json({ success: true, message: "Rating submitted successfully", data: newRating });
+    } catch (err: any) {
+      if (err.message.includes(UNIQUE_CONSTRAINT)) {
         const [updateRating] = await db
-          .update(RatingTable)
+          .update(table)
           .set({ rating })
-          .where(and(eq(RatingTable.novelId, novelId), eq(RatingTable.userId, user.id)))
-          .returning();
+          .where(and(eq(table.novelId, id), eq(table.userId, user.id)))
+          .returning(dataReturned);
 
-        return c.json({ success: true, data: updateRating });
+        return c.json({
+          success: true,
+          message: "Rating updated successfully",
+          data: updateRating,
+        });
       }
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);

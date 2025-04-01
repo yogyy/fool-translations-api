@@ -1,10 +1,10 @@
-import { drizzle } from "drizzle-orm/bun-sqlite";
-import { Database } from "bun:sqlite";
+import { drizzle } from "drizzle-orm/d1";
 import * as novelSchema from "./schema/novel";
 import * as userSchema from "./schema/user";
 import * as ntfSchema from "./schema/notification";
+import { AppContext } from "@/types";
 
-const sqlite = new Database("./src/db/novel.sqlite");
-const db = drizzle(sqlite, { schema: { ...novelSchema, ...userSchema, ...ntfSchema } });
-
-export { db };
+export function createDB(env: AppContext["Bindings"]) {
+  const db = drizzle(env.DB, { schema: { ...novelSchema, ...userSchema, ...ntfSchema } });
+  return db;
+}

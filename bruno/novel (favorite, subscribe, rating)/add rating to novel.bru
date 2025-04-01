@@ -1,0 +1,22 @@
+meta {
+  name: add rating to novel
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{URL}}/novels/:id/rating
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: nvl_x3pzgwcjld3236cz
+}
+
+body:json {
+  {
+    "novelId": "nvl_x3pzgwcjld3236cz",
+    "rating": 7
+  }
+}

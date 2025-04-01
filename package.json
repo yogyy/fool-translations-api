@@ -1,22 +1,30 @@
 {
   "scripts": {
-    "dev": "bun --watch src/index.ts",
-    "generate": "bunx drizzle-kit generate",
-    "migrate": "bun src/db/migrate.ts",
-    "seed": "bun src/db/seed.ts",
-    "studio": "drizzle-kit studio"
+    "dev": "wrangler dev --local",
+    "deploy": "wrangler deploy --minify",
+    "generate": "drizzle-kit generate",
+    "migrate": "wrangler d1 migrations apply DB --local",
+    "seed": "bun test/seed.ts",
+    "studio": "drizzle-kit studio",
+    "studio:local": "drizzle-kit studio --config=drizzle.config.local.ts",
+    "test": "vitest run",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.3.0",
-    "@lucia-auth/adapter-drizzle": "^1.1.0",
     "@oslojs/crypto": "^1.0.1",
     "@oslojs/encoding": "^1.1.0",
+    "dotenv": "^16.4.7",
     "drizzle-orm": "^0.33.0",
     "hono": "^4.6.3",
+    "vitest": "^3.0.9",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "bun-types": "^1.1.29",
-    "drizzle-kit": "^0.24.2"
+    "@cloudflare/vitest-pool-workers": "^0.8.7",
+    "@types/node": "^22.13.14",
+    "better-sqlite3": "^11.9.1",
+    "drizzle-kit": "^0.24.2",
+    "wrangler": "^4.5.0"
   }
 }

@@ -1,0 +1,15 @@
+meta {
+  name: read/unred notification
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{URL}}/notifications/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: ntf_12344444
+}

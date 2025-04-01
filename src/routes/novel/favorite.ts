@@ -1,24 +1,25 @@
 import { Hono } from "hono";
 import { isUser } from "@/middleware";
-import { AuthContext } from "@/types";
+import { AppContext } from "@/types";
 import { zValidator } from "@hono/zod-validator";
-import { db } from "@/db";
+import { createDB } from "@/db";
 import { User } from "@/db/schema/user";
 import { favoriteTable } from "@/db/schema/novel";
-import { novelIdValidation } from "@/lib/dtos";
+import { byIdParam } from "@/lib/dtos";
 import { and, count, eq } from "drizzle-orm";
-import { SQLiteError } from "bun:sqlite";
+import { UNIQUE_CONSTRAINT } from "@/lib/utils";
 
-const favoriteRoutes = new Hono<AuthContext>()
-  .get("/:novelId", zValidator("param", novelIdValidation), async (c) => {
-    const { novelId } = c.req.valid("param");
+const favoriteRoutes = new Hono<AppContext>()
+  .get("/", zValidator("param", byIdParam("nvl_")), async (c) => {
+    const { id } = c.req.valid("param");
     const user = c.get("user");
+    const db = createDB(c.env);
 
     try {
       const [totalFav] = await db
         .select({ count: count() })
         .from(favoriteTable)
-        .where(eq(favoriteTable.novelId, novelId));
+        .where(eq(favoriteTable.novelId, id));
 
       const noFavorited = c.json({
         success: true,
@@ -28,39 +29,37 @@ const favoriteRoutes = new Hono<AuthContext>()
       if (!user) return noFavorited;
 
       const favorited = await db.query.favoriteTable.findFirst({
-        where: and(eq(favoriteTable.novelId, novelId), eq(favoriteTable.userId, user.id)),
+        where: and(eq(favoriteTable.novelId, id), eq(favoriteTable.userId, user.id)),
       });
 
       if (!favorited) return noFavorited;
 
-      return c.json({
-        success: true,
-        data: { isFavorited: true, total: totalFav.count },
-      });
+      return c.json({ success: true, data: { isFavorited: true, total: totalFav.count } });
     } catch (err) {
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
     }
   })
   .use(isUser)
-  .post("/", zValidator("json", novelIdValidation), async (c) => {
-    const { novelId } = c.req.valid("json");
+  .post("/", zValidator("param", byIdParam("nvl_")), async (c) => {
+    const { id } = c.req.valid("param");
     const user = c.get("user") as User;
+    const db = createDB(c.env);
 
     try {
-      await db.insert(favoriteTable).values({ userId: user.id, novelId }).returning();
+      await db.insert(favoriteTable).values({ userId: user.id, novelId: id });
 
-      return c.json({ success: true, action: "added", data: "This Novel added to your Favorites" });
-    } catch (err) {
-      if (err instanceof SQLiteError && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return c.json({ success: true, action: "added", message: "Novel added to your favorites" });
+    } catch (err: any) {
+      if (err.message.includes(UNIQUE_CONSTRAINT)) {
         await db
           .delete(favoriteTable)
-          .where(and(eq(favoriteTable.novelId, novelId), eq(favoriteTable.userId, user.id)));
+          .where(and(eq(favoriteTable.novelId, id), eq(favoriteTable.userId, user.id)));
 
         return c.json({
           success: true,
-          action: "deleted",
-          data: "This Novel was removed from your Favorites",
+          action: "removed",
+          message: "Novel removed from your favorites",
         });
       }
       console.log(err);

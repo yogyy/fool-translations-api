@@ -1,0 +1,15 @@
+meta {
+  name: get novel's chapters
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{URL}}/chapters?novelId=nvl_x3pzgwcjld3236cz
+  body: none
+  auth: inherit
+}
+
+params:query {
+  novelId: nvl_x3pzgwcjld3236cz
+}

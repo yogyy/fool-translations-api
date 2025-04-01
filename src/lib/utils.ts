@@ -7,3 +7,6 @@ export const generateRandId = (prefix = "", length = 10) => {
 
   return prefix ? `${prefix}_${rand}` : rand;
 };
+
+export const FOREIGN_KEY_CONSTRAINT = "FOREIGN KEY constraint failed";
+export const UNIQUE_CONSTRAINT = "UNIQUE constraint failed:";
