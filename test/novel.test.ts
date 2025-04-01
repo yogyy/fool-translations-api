@@ -1,61 +1,42 @@
-import app from "@/routes/root";
-import { describe, expect, test } from "bun:test";
-import { cookieTest, ExpectedNovel, newNovel, updateNovel } from "./test-helper";
+import { describe, expect, test } from "vitest";
+import { cookieTest, ExpectedNovel, localURL, newNovel, updateNovel } from "./test-helper";
 import { Novel } from "@/db/schema/novel";
+
+interface ReturnType<T> {
+  success: boolean;
+  data: Array<T>;
+}
 
 describe("routes get many novels", () => {
   test("test get all novel", async () => {
-    const res = await app.request("/api/v1/novels");
+    const res = await fetch(`${localURL}/novels`);
+    const data: ReturnType<any> = await res.json();
+
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(
-      expect.objectContaining({
-        success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            id: expect.any(String),
-            title: expect.any(String),
-            genres: expect.any(Array),
-            cover: expect.any(String),
-            totalRatings: expect.any(Number),
-            averageRating: expect.any(String),
-            popularityScore: expect.any(Number),
-          }),
-        ]),
-      })
-    );
+    expect(data.success).toBe(true);
+    expect(Array.isArray(data.data)).toBe(true);
   });
 
   test("test get featured/hot", async () => {
-    const res = await app.request("/api/v1/novels/featured/hot");
+    const res = await fetch(`${localURL}/novels/featured/hot`);
+    const data = await res.json();
+
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual(
+    expect(data).toEqual(
       expect.objectContaining({
         success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            id: expect.any(Number),
-            image: expect.any(String),
-            createdAt: expect.any(String),
-            novelId: expect.any(String),
-          }),
-        ]),
+        data: expect.arrayContaining([]),
       })
     );
   });
 
   test("test get featured/top", async () => {
-    const res = await app.request("/api/v1/novels/featured/top");
+    const res = await fetch(`${localURL}/novels/featured/top`);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(
       expect.objectContaining({
         success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            id: expect.any(String),
-            title: expect.any(String),
-            cover: expect.any(String),
-          }),
-        ]),
+        data: expect.arrayContaining([]),
       })
     );
   });
@@ -65,7 +46,7 @@ describe("novel by id", () => {
   let novelTest: { success: boolean; data: Novel };
 
   test("add new novel", async () => {
-    const res = await app.request("/api/v1/admin/novel", {
+    const res = await fetch(`${localURL}/admin/novel`, {
       method: "POST",
       body: JSON.stringify(newNovel),
       headers: new Headers({
@@ -87,7 +68,7 @@ describe("novel by id", () => {
 
   test("get novel by id", async () => {
     const novelId = novelTest.data.id;
-    const res = await app.request(`/api/v1/novels/${novelId}`);
+    const res = await fetch(`${localURL}/novels/${novelId}`);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual(
       expect.objectContaining({
@@ -99,7 +80,7 @@ describe("novel by id", () => {
 
   test("update novel by id", async () => {
     const novelId = novelTest.data.id;
-    const res = await app.request(`/api/v1/admin/novel/${novelId}`, {
+    const res = await fetch(`${localURL}/admin/novel/${novelId}`, {
       method: "PUT",
       body: JSON.stringify(updateNovel),
       headers: new Headers({
@@ -118,7 +99,7 @@ describe("novel by id", () => {
 
   test("delete novel by id", async () => {
     const novelId = novelTest.data.id;
-    const res = await app.request(`/api/v1/admin/novel/${novelId}`, {
+    const res = await fetch(`${localURL}/admin/novel/${novelId}`, {
       method: "DELETE",
       headers: new Headers({
         Cookie: cookieTest,

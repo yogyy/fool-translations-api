@@ -115,7 +115,7 @@ describe("User Signin & Signout", () => {
 
 describe("delete user testing", async () => {
   test("POST /delete-testing", async () => {
-    const res = await fetch(`${root}/delete-testing`, {
+    const res = await fetch(`${root}/testing/delete-user`, {
       method: "POST",
       body: JSON.stringify(registerBody),
       headers: new Headers({ "Content-Type": "application/json" }),
