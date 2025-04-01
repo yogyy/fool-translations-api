@@ -20,8 +20,14 @@ bun migrate
 
 ### Run Seeding (optional)
 
+to run seeding, you need to turn on the server first, and then request to /api/v1/testing/seeding
+
 ```bash
-bun seed
+bun dev
+```
+
+```bash
+curl localhost:8787/api/v1/testing/seeding
 ```
 
 ### testing
@@ -36,7 +42,7 @@ bun test
 
 ```bash
 bun dev
-open http://localhost:4000
+open http://localhost:8787 #wrangler
 ```
 
 ### Available Routes
@@ -45,6 +51,7 @@ open http://localhost:4000
 
 ```bash
 GET     /api/v1/auth/validate
+GET     /api/v1/auth/invalidate
 POST    /api/v1/auth/signup
 POST    /api/v1/auth/signin
 POST    /api/v1/auth/signout
@@ -61,14 +68,14 @@ GET     /api/v1/novels/:id
 GET     /api/v1/chapters
 GET     /api/v1/chapters/:id
 
-GET     /api/v1/favorites/:novelId
-POST    /api/v1/favorites
+GET     /api/v1/novels/:id/favorite
+POST    /api/v1/novels/:id/favorite
 
-GET     /api/v1/subscribes/:novelId
-POST    /api/v1/subscribes/notify
+GET     /api/v1/novels/:id/subscribe
+POST    /api/v1/novels/:id/subscribe
 
-GET     /api/v1/ratings/:novelId
-POST    /api/v1/ratings/rate
+GET     /api/v1/novels/:id/rating
+POST    /api/v1/novels/:id/rating
 ```
 
 #### Admin Routes
