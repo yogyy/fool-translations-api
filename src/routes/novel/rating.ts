@@ -8,7 +8,7 @@ import { RatingTable as table } from "@/db/schema/novel";
 import { byIdParam } from "@/lib/dtos";
 import { createDB } from "@/db";
 import { User } from "@/db/schema/user";
-import { UNIQUE_CONSTRAINT } from "@/lib/utils";
+import { FOREIGN_KEY_CONSTRAINT, UNIQUE_CONSTRAINT } from "@/lib/utils";
 import { z } from "zod";
 
 export const RatingDTO = z.object({
@@ -51,6 +51,9 @@ const ratingRoutes = new Hono<AppContext>()
 
       return c.json({ success: true, message: "Rating submitted successfully", data: newRating });
     } catch (err: any) {
+      if (err.message.includes(FOREIGN_KEY_CONSTRAINT)) {
+        return c.json({ success: false, error: "Novel Not Found" }, 404);
+      }
       if (err.message.includes(UNIQUE_CONSTRAINT)) {
         const [updateRating] = await db
           .update(table)

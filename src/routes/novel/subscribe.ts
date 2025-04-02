@@ -7,7 +7,7 @@ import { byIdParam } from "@/lib/dtos";
 import { isUser } from "@/middleware";
 import { User } from "@/db/schema/user";
 import { createDB } from "@/db";
-import { UNIQUE_CONSTRAINT } from "@/lib/utils";
+import { FOREIGN_KEY_CONSTRAINT, UNIQUE_CONSTRAINT } from "@/lib/utils";
 
 const subscribeRoutes = new Hono<AppContext>()
   .get("/", zValidator("param", byIdParam("nvl_")), async (c) => {
@@ -54,6 +54,9 @@ const subscribeRoutes = new Hono<AppContext>()
 
       return c.json({ success: true, action: "added", message: "You've subscribed to this novel" });
     } catch (err: any) {
+      if (err.message.includes(FOREIGN_KEY_CONSTRAINT)) {
+        return c.json({ success: false, error: "Novel Not Found" }, 404);
+      }
       if (err.message.includes(UNIQUE_CONSTRAINT)) {
         await db
           .delete(subscribeTable)
