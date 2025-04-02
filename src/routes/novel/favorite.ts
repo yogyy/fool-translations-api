@@ -7,7 +7,7 @@ import { User } from "@/db/schema/user";
 import { favoriteTable } from "@/db/schema/novel";
 import { byIdParam } from "@/lib/dtos";
 import { and, count, eq } from "drizzle-orm";
-import { UNIQUE_CONSTRAINT } from "@/lib/utils";
+import { FOREIGN_KEY_CONSTRAINT, UNIQUE_CONSTRAINT } from "@/lib/utils";
 
 const favoriteRoutes = new Hono<AppContext>()
   .get("/", zValidator("param", byIdParam("nvl_")), async (c) => {
@@ -51,6 +51,9 @@ const favoriteRoutes = new Hono<AppContext>()
 
       return c.json({ success: true, action: "added", message: "Novel added to your favorites" });
     } catch (err: any) {
+      if (err.message.includes(FOREIGN_KEY_CONSTRAINT)) {
+        return c.json({ success: false, error: "Novel Not Found" }, 404);
+      }
       if (err.message.includes(UNIQUE_CONSTRAINT)) {
         await db
           .delete(favoriteTable)
@@ -62,6 +65,7 @@ const favoriteRoutes = new Hono<AppContext>()
           message: "Novel removed from your favorites",
         });
       }
+
       console.log(err);
       return c.json({ error: "Internal Server Errror" }, 500);
     }
