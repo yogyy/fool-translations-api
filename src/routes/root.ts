@@ -12,10 +12,16 @@ import notificationRoutes from "./notification";
 import testingRoutes from "./testing";
 
 const app = new Hono<AppContext>()
+  .use("*", logger())
+  .use("*", async (c, next) => {
+    const corsMiddlewareHandler = cors({
+      origin: c.env.CORS_ORIGIN,
+    });
+    return corsMiddlewareHandler(c, next);
+  })
+  .use("*", authentication)
   .basePath("/api/v1")
   .use(trimTrailingSlash())
-  .use("*", logger(), cors({ origin: ["http://localhost:5173"], credentials: true }))
-  .use("*", authentication)
   .route("/auth", authRoutes)
   .route("/admin", adminRoutes)
   .route("/novels", novelRoutes)
