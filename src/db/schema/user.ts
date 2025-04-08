@@ -12,8 +12,12 @@ export const userTable = sqliteTable(
     email: text("email").notNull(),
     name: text("name").notNull(),
     type: text("type", { enum: ["user", "admin"] }).default("user"),
-    image: text("image"),
-    passwordHash: text("password_hash").notNull(),
+    avatar: text("avatar"),
+    password: text("password"),
+    provider: text("provider", {
+      enum: ["credentials", "google", "discord"],
+    }).notNull(),
+    providerId: text("provider_id").unique(),
     createdAt: text("created_at")
       .notNull()
       .default(sql`(current_timestamp)`),
