@@ -57,6 +57,13 @@ POST    /api/v1/auth/signin
 POST    /api/v1/auth/signout
 ```
 
+#### OAuth Routes
+
+```bash
+GET     /api/v1/oauth/discord
+GET     /api/v1/oauth/google
+```
+
 #### Novel Routes
 
 ```bash
