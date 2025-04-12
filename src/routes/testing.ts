@@ -69,7 +69,8 @@ const testingRoutes = new Hono<AppContext>()
         id: "usr_testvcmxmonvpdp6",
         name: "tester",
         type: "admin",
-        passwordHash: "password",
+        password: "password",
+        provider: "credentials",
       })
       .returning();
     const token = generateSessionToken();

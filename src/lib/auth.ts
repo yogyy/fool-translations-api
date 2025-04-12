@@ -71,7 +71,7 @@ export async function validateSessionToken(
       .where(eq(sessionTable.id, session.id));
   }
 
-  delete (user as any).passwordHash;
+  delete (user as any).password;
 
   return { session, user };
 }
@@ -95,5 +95,5 @@ export async function invalidateSession(
 }
 
 export type SessionValidationResult =
-  | { session: Session; user: Omit<User, "passwordHash"> }
+  | { session: Session; user: Omit<User, "password"> }
   | { session: null; user: null };

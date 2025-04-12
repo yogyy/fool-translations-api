@@ -27,7 +27,7 @@ const authRoutes = new Hono<AppContext>()
 
     const userId = generateRandId("usr");
     try {
-      await createUser(c.env, email, userId, name, password);
+      await createUser({ env: c.env, email, id: userId, name, password, provider: "credentials" });
 
       const token = generateSessionToken();
       const session = await createSession(c.env, token, userId);
@@ -46,14 +46,14 @@ const authRoutes = new Hono<AppContext>()
     const { email, password } = c.req.valid("json");
 
     try {
-      const user = await findUserByEmail(c.env, email);
+      const user = await findUserByEmail(c.env, email, "credentials");
       if (!user) {
-        return c.json({ success: false, error: "Invalid Username or Password." }, 401);
+        return c.json({ success: false, error: "Invalid Email or Password." }, 401);
       }
 
-      const passwordMatch = password === user.passwordHash;
+      const passwordMatch = password === user.password;
       if (!passwordMatch) {
-        return c.json({ success: false, error: "Invalid Username or Password." }, 401);
+        return c.json({ success: false, error: "Invalid Email or Password." }, 401);
       }
 
       const token = generateSessionToken();

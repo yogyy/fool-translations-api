@@ -26,7 +26,7 @@ export async function updateNovel(
 ) {
   const [data] = await createDB(env)
     .update(novelTable)
-    .set({ ...body, last_updated: sql`(current_timestamp)` })
+    .set({ ...body, lastUpdated: sql`(current_timestamp)` })
     .where(eq(novelTable.id, id))
     .returning();
 
@@ -61,7 +61,7 @@ export async function addChapter(
 export async function updateLastUpdatedForNovel(env: AppContext["Bindings"], novelId: string) {
   return await createDB(env)
     .update(novelTable)
-    .set({ last_updated: sql`(current_timestamp)` })
+    .set({ lastUpdated: sql`(current_timestamp)` })
     .where(eq(novelTable.id, novelId));
 }
 

@@ -10,6 +10,7 @@ import adminRoutes from "./novel/admin";
 import chapterRoutes from "./novel/chapter";
 import notificationRoutes from "./notification";
 import testingRoutes from "./testing";
+import oauthRoutes from "./oauth";
 
 const app = new Hono<AppContext>()
   .use("*", logger())
@@ -23,6 +24,7 @@ const app = new Hono<AppContext>()
   .basePath("/api/v1")
   .use(trimTrailingSlash())
   .route("/auth", authRoutes)
+  .route("/oauth", oauthRoutes)
   .route("/admin", adminRoutes)
   .route("/novels", novelRoutes)
   .route("/chapters", chapterRoutes)

@@ -12,7 +12,7 @@ import { FOREIGN_KEY_CONSTRAINT, UNIQUE_CONSTRAINT } from "@/lib/utils";
 import { z } from "zod";
 
 export const RatingDTO = z.object({
-  rating: z.number().min(1).max(10),
+  rating: z.number().min(1).max(5),
 });
 
 const ratingRoutes = new Hono<AppContext>()

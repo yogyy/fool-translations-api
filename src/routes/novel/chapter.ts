@@ -4,7 +4,7 @@ import { chapterTable, novelTable } from "@/db/schema/novel";
 import { AllChapterParam, byIdParam } from "@/lib/dtos";
 import { AppContext } from "@/types";
 import { zValidator } from "@hono/zod-validator";
-import { and, eq, gt, lt, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 const chapterRoutes = new Hono<AppContext>()
   .get("/", zValidator("query", AllChapterParam), async (c) => {
@@ -39,7 +39,7 @@ const chapterRoutes = new Hono<AppContext>()
           novel: {
             id: novelTable.id,
             title: novelTable.title,
-            synopsis: novelTable.synopsis,
+            cover: novelTable.cover,
             banner: novelTable.banner,
           },
         })
@@ -60,7 +60,7 @@ const chapterRoutes = new Hono<AppContext>()
         .where(
           and(
             eq(chapterTable.novelId, currentCh.novel.id),
-            lt(chapterTable.chapterNum, currentCh.chapter.chapterNum)
+            eq(chapterTable.chapterNum, currentCh.chapter.chapterNum - 1)
           )
         )
         .limit(1);
@@ -70,7 +70,7 @@ const chapterRoutes = new Hono<AppContext>()
         .where(
           and(
             eq(chapterTable.novelId, currentCh.novel.id),
-            gt(chapterTable.chapterNum, currentCh.chapter.chapterNum)
+            eq(chapterTable.chapterNum, currentCh.chapter.chapterNum + 1)
           )
         )
         .limit(1);
