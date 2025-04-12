@@ -16,10 +16,10 @@ export const novelTable = sqliteTable(
     banner: text("banner"),
     totalViews: integer("total_views").default(0),
     status: text("status", { enum: ["ongoing", "completed"] }).default("ongoing"),
-    published_at: text("published_at")
+    publishedAt: text("published_at")
       .default(sql`(current_timestamp)`)
       .notNull(),
-    last_updated: text("last_updated")
+    lastUpdated: text("last_updated")
       .default(sql`(current_timestamp)`)
       .notNull(),
   },

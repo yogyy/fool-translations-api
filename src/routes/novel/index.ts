@@ -16,7 +16,7 @@ const novelRoutes = new Hono<AppContext>()
 
     const orderColumn: SQLWrapper =
       sort === "recent"
-        ? novelTable.last_updated
+        ? novelTable.lastUpdated
         : sort === "views"
         ? novelTable.totalViews
         : sql`${count(RatingTable.id)} * ${avg(RatingTable.rating)}`;
@@ -28,8 +28,9 @@ const novelRoutes = new Hono<AppContext>()
           title: novelTable.title,
           genres: novelTable.genres,
           cover: novelTable.cover,
-          totalRatings: count(RatingTable.id),
-          averageRating: avg(RatingTable.rating),
+          lastUpdated: novelTable.lastUpdated,
+          totalViews: novelTable.totalViews,
+          status: novelTable.status,
           popularityScore: sql`${count(RatingTable.id)} * ${avg(RatingTable.rating)}`,
         })
         .from(novelTable)
@@ -65,12 +66,13 @@ const novelRoutes = new Hono<AppContext>()
           id: novelTable.id,
           title: novelTable.title,
           cover: novelTable.cover,
+          genres: novelTable.genres,
         })
         .from(novelTable)
         .leftJoin(RatingTable, eq(novelTable.id, RatingTable.novelId))
         .groupBy(novelTable.id)
         .orderBy(desc(sql`${count(RatingTable.id)} * ${avg(RatingTable.rating)}`))
-        .limit(20);
+        .limit(10);
 
       return c.json({ success: true, data: topnovels });
     } catch (err) {
@@ -100,7 +102,7 @@ const novelRoutes = new Hono<AppContext>()
       updateView.run();
       return c.json({
         success: true,
-        data: { ...novelbyId, average_rating: Number(rating.value) },
+        data: { ...novelbyId, averageRating: Number(rating.value) },
       });
     } catch (err) {
       console.log(err);
