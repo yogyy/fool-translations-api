@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { AppContext } from "@/types";
-import { generateRandId } from "@/lib/utils";
+import { generateRandId, UNIQUE_CONSTRAINT } from "@/lib/utils";
 import { zValidator } from "@hono/zod-validator";
 import { userSigninDTO, userSignupDTO } from "@/lib/dtos";
 import { createUser, findUserByEmail } from "@/services/auth.service";
@@ -35,7 +35,7 @@ const authRoutes = new Hono<AppContext>()
 
       return c.json({ success: true, token });
     } catch (err: any) {
-      if (err.message.includes("emailUniqueIndex")) {
+      if (err.message.includes(UNIQUE_CONSTRAINT)) {
         return c.json({ success: false, error: "Email Already Used" }, 400);
       }
       console.log(err);
