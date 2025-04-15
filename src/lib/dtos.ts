@@ -23,6 +23,7 @@ export const novelPayloadDTO = z.object({
   author: z.string(),
   title: z.string(),
   synopsis: z.string(),
+  publishedAt: z.string().date(),
   genres: z.array(z.string()),
   cover: z.string().url().optional().or(z.literal("")),
   banner: z.string().url().optional().or(z.literal("")),
