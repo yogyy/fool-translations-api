@@ -17,6 +17,7 @@ const app = new Hono<AppContext>()
   .use("*", async (c, next) => {
     const corsMiddlewareHandler = cors({
       origin: c.env.CORS_ORIGIN,
+      credentials: true,
     });
     return corsMiddlewareHandler(c, next);
   })
